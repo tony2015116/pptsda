@@ -11,7 +11,8 @@ The goal of pptsda is to ...
 You can install the development version of pptsda like so:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# install.packages("devtools")
+devtools::install_github("tony2015116/pptsdd")
 ```
 
 ## Example
