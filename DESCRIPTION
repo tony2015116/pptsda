@@ -8,6 +8,8 @@ Authors@R: c(
 Description: An R package that can analyze the csv data from the Nedap in
     pig farm.
 License: MIT + file LICENSE
+URL: https://github.com/tony2015116/pptsda
+BugReports: https://github.com/tony2015116/pptsda/issues
 Imports: 
     broom.mixed,
     crayon,
@@ -35,5 +37,3 @@ VignetteBuilder:
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-URL: https://github.com/tony2015116/pptsda
-BugReports: https://github.com/tony2015116/pptsda/issues

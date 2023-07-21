@@ -12,7 +12,7 @@ You can install the development version of pptsda like so:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("tony2015116/pptsdd")
+devtools::install_github("tony2015116/pptsda")
 ```
 
 ## Example
