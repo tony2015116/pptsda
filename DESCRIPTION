@@ -35,3 +35,5 @@ VignetteBuilder:
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
+URL: https://github.com/tony2015116/pptsda
+BugReports: https://github.com/tony2015116/pptsda/issues
