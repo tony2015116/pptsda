@@ -96,9 +96,24 @@ dfi_get <- dfi_get(data = data, adg_about = adg_res)
 
 ```{r example-fcr_get}
 data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
-fcr_res <- fcr_get(data = data, my_break = c(30, 115))
+fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 ```
 
+  
+
+# fcr_summary
+
+    
+
+  
+
+```{r example-fcr_summary}
+data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
+fcr_res <- fcr_get(data = data, my_break = c(30, 100))
+fcr_summary(fcr_res[[1]])
+```
+
+  
   
   
 That's it ! This the end of the documented story of our package. All components are there.

@@ -221,9 +221,9 @@ This should be a reproducible and working example
 <span><span class="co"><span style="color: #00BB00;">#&gt;  - FIV-lo; FIV-hi; FIV-0; OTV-lo; OTV-hi; FRV-hi-FIV-lo; FRV-hi-strict; FRV-hi; FRV-0; FRV-lo;</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;"> - LWD-lo; LWD-hi; FWD-lo; FWD-hi; LTD-lo; FTD-lo.</span></span></span>
 <span><span class="co"><span style="color: #BB0000;">#&gt; </span></span></span>
-<span><span class="co">#&gt; Warning in `[.data.table`(data$transformed_data, , ..col_names): Both</span></span>
-<span><span class="co">#&gt; 'col_names' and '..col_names' exist in calling scope. Please remove the</span></span>
-<span><span class="co">#&gt; '..col_names' variable in calling scope for clarity.</span></span>
+<span><span class="co">#&gt; Warning in `[.data.table`(data$transformed_data, , ..cols_need): Both</span></span>
+<span><span class="co">#&gt; 'cols_need' and '..cols_need' exist in calling scope. Please remove the</span></span>
+<span><span class="co">#&gt; '..cols_need' variable in calling scope for clarity.</span></span>
 <span><span class="co">#&gt; Warning in stats::cor(x, use = use, method = method): the standard deviation is</span></span>
 <span><span class="co">#&gt; zero</span></span>
 <span><span class="co">#&gt; Warning: The correlation matrix has missing values. 21 columns were excluded</span></span>
@@ -236,7 +236,7 @@ This should be a reproducible and working example
 </h2>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">rio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rio/man/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/ppt_test_data.xlsx"</span><span class="op">)</span></span>
-<span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, my_break <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">115</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, my_break <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">• There are no duplicate responders in different locations.</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; • The removing of weight &lt; 15kg will not delete responder.</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;">• Revoming records of missing will delete responders:  3 </span></span></span>
@@ -252,7 +252,7 @@ This should be a reproducible and working example
 <span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BBBBBB;">• Check for errors and warnings in Simple Linear Regression</span></span></span>
 <span><span class="co"><span style="color: #BBBBBB;">#&gt; </span><span style="color: #0000BB;"> - No errors encountered during processing.</span></span></span>
 <span><span class="co"><span style="color: #0000BB;">#&gt;  - No warnings encountered during processing.</span></span></span>
-<span><span class="co"><span style="color: #0000BB;">#&gt; </span><span style="color: #00BB00;">• Calculate ADG at 30~115kg weight range using Simple Linear Regression succeeded!</span></span></span>
+<span><span class="co"><span style="color: #0000BB;">#&gt; </span><span style="color: #00BB00;">• Calculate ADG at 30~100kg weight range using Simple Linear Regression succeeded!</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; • Successfully generated the following 7 variables during the food intake correction process.</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt;  - FIV:feed intake per visit;</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt;  - OTV:occupation time per visit;</span></span></span>
@@ -265,17 +265,74 @@ This should be a reproducible and working example
 <span><span class="co"><span style="color: #00BB00;">#&gt;  - FIV-lo; FIV-hi; FIV-0; OTV-lo; OTV-hi; FRV-hi-FIV-lo; FRV-hi-strict; FRV-hi; FRV-0; FRV-lo;</span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;"> - LWD-lo; LWD-hi; FWD-lo; FWD-hi; LTD-lo; FTD-lo.</span></span></span>
 <span><span class="co"><span style="color: #BB0000;">#&gt; </span></span></span>
-<span><span class="co">#&gt; Warning in `[.data.table`(data$transformed_data, , ..col_names): Both</span></span>
-<span><span class="co">#&gt; 'col_names' and '..col_names' exist in calling scope. Please remove the</span></span>
-<span><span class="co">#&gt; '..col_names' variable in calling scope for clarity.</span></span>
+<span><span class="co">#&gt; Warning in `[.data.table`(data$transformed_data, , ..cols_need): Both</span></span>
+<span><span class="co">#&gt; 'cols_need' and '..cols_need' exist in calling scope. Please remove the</span></span>
+<span><span class="co">#&gt; '..cols_need' variable in calling scope for clarity.</span></span>
 <span><span class="co">#&gt; Warning in stats::cor(x, use = use, method = method): the standard deviation is</span></span>
 <span><span class="co">#&gt; zero</span></span>
 <span><span class="co">#&gt; Warning: The correlation matrix has missing values. 23 columns were excluded</span></span>
 <span><span class="co">#&gt; from the filter.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">• Running model with equation: </span></span></span>
-<span><span class="co"><span style="color: #00BB00;">#&gt; </span>dfi_right_part ~ otd_2 + otd_9 + otd_10 + fiv_hi_p + otv_hi_p + frv_lo_p + location + lm_slope + weight + (1 | responder)</span></span>
-<span><span class="co">#&gt; Warning in indices[which(stats::complete.cases(original))] &lt;- seq_len(nrow(x)):</span></span>
-<span><span class="co">#&gt; number of items to replace is not a multiple of replacement length</span></span></code></pre></div>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span>dfi_right_part ~ otd_9 + otd_10 + fiv_hi_p + otv_hi_p + frv_lo_p + location + lm_slope + weight + (1 | responder)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="fcr_summary">fcr_summary<a class="anchor" aria-label="anchor" href="#fcr_summary"></a>
+</h2>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">rio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rio/man/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/ppt_test_data.xlsx"</span><span class="op">)</span></span>
+<span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, my_break <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">• There are no duplicate responders in different locations.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; • The removing of weight &lt; 15kg will not delete responder.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;">• Revoming records of missing will delete responders:  3 </span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt; • Deleted responders: </span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt;  c("12360","12378","12438") </span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt; </span><span style="color: #BBBBBB;">• Check for errors and warnings in RANSAC Robust</span></span></span>
+<span><span class="co"><span style="color: #BBBBBB;">#&gt; </span><span style="color: #0000BB;"> - No errors encountered during processing.</span></span></span>
+<span><span class="co"><span style="color: #0000BB;">#&gt;  - No warnings encountered during processing.</span></span></span>
+<span><span class="co"><span style="color: #0000BB;">#&gt; </span><span style="color: #00BB00;"> - RANSAC Robust succeeded</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; • The outliers detected by model will not delete responder.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; • All responders' begin_test_weight are less than or equal to 60kg.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; • All responders' end_test_weight are more than or equal to 85kg.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BBBBBB;">• Check for errors and warnings in Simple Linear Regression</span></span></span>
+<span><span class="co"><span style="color: #BBBBBB;">#&gt; </span><span style="color: #0000BB;"> - No errors encountered during processing.</span></span></span>
+<span><span class="co"><span style="color: #0000BB;">#&gt;  - No warnings encountered during processing.</span></span></span>
+<span><span class="co"><span style="color: #0000BB;">#&gt; </span><span style="color: #00BB00;">• Calculate ADG at 30~100kg weight range using Simple Linear Regression succeeded!</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; • Successfully generated the following 7 variables during the food intake correction process.</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt;  - FIV:feed intake per visit;</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt;  - OTV:occupation time per visit;</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt;  - FRV:feeding rate per visit;</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;"> - LWD:leading weight difference;</span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt;  - LTD:leading time difference;</span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt;  - FWD:following weight difference;</span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt;  - FTD:following time difference.</span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt; </span><span style="color: #00BB00;">• Successfully generated 16 error types from 7 variables:</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt;  - FIV-lo; FIV-hi; FIV-0; OTV-lo; OTV-hi; FRV-hi-FIV-lo; FRV-hi-strict; FRV-hi; FRV-0; FRV-lo;</span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span><span style="color: #BB0000;"> - LWD-lo; LWD-hi; FWD-lo; FWD-hi; LTD-lo; FTD-lo.</span></span></span>
+<span><span class="co"><span style="color: #BB0000;">#&gt; </span></span></span>
+<span><span class="co">#&gt; Warning in `[.data.table`(data$transformed_data, , ..cols_need): Both</span></span>
+<span><span class="co">#&gt; 'cols_need' and '..cols_need' exist in calling scope. Please remove the</span></span>
+<span><span class="co">#&gt; '..cols_need' variable in calling scope for clarity.</span></span>
+<span><span class="co">#&gt; Warning in stats::cor(x, use = use, method = method): the standard deviation is</span></span>
+<span><span class="co">#&gt; zero</span></span>
+<span><span class="co">#&gt; Warning: The correlation matrix has missing values. 23 columns were excluded</span></span>
+<span><span class="co">#&gt; from the filter.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">• Running model with equation: </span></span></span>
+<span><span class="co"><span style="color: #00BB00;">#&gt; </span>dfi_right_part ~ otd_9 + otd_10 + fiv_hi_p + otv_hi_p + frv_lo_p + location + lm_slope + weight + (1 | responder)</span></span>
+<span><span class="fu"><a href="../reference/fcr_summary.html">fcr_summary</a></span><span class="op">(</span><span class="va">fcr_res</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in `[.data.table`(data, , ..selected_cols): Both 'selected_cols' and</span></span>
+<span><span class="co">#&gt; '..selected_cols' exist in calling scope. Please remove the '..selected_cols'</span></span>
+<span><span class="co">#&gt; variable in calling scope for clarity.</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 7</span></span></span>
+<span><span class="co">#&gt;   set                N min     max     median  `mean+/-sd`      cv    </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> min_weight_cut    87 28.00   38.75   31.00   31.59+/-2.02     6.40% </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> max_weight_cut    87 97.00   104.00  99.50   99.64+/-1.09     1.09% </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> lm_slope          87 969.64  1420.22 1183.53 1176.95+/-106.29 9.03% </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> test_days         87 60.00   87.00   70.00   71.87+/-6.71     9.34% </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> origin_dfi        87 1965.69 3530.22 2708.47 2713.90+/-351.45 12.95%</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> corrected_dfi     87 1980.91 3524.90 2709.17 2711.98+/-348.17 12.84%</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> fcr               87 1.85    2.74    2.33    2.30+/-0.20      8.80% </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> cor_fcr           87 1.84    2.73    2.31    2.30+/-0.20      8.69%</span></span></code></pre></div>
 <p>That’s it ! This the end of the documented story of our package. All
 components are there.</p>
 <!-- 

@@ -667,7 +667,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
     fiv_0  <- fiv_hi <- fiv_lo <- frv <- frv_0 <- frv_hi <- frv_hi_fiv_lo <- frv_hi_strict <- 
       frv_lo <- ftd <- ftd_lo <- fwd <- fwd_hi <- fwd_lo <- lm_slope <- location <- location_maxn <- 
       ltd <- ltd_lo <- lwd <- lwd_hi <- lwd_lo <- n <- otv <- otv_hi <- otv_lo <- responder <- seq_days <- 
-      seq_in_day <- seq_in_location <- stage <- visit_time <- weight <- NULL
+      seq_in_day <- seq_in_location <- stage <- visit_time <- weight <- cols_need <- ..cols_need <- NULL
     
     process_data <- function(data) {
       if (missing(data)) stop("Missing data frame or data table!")
@@ -842,7 +842,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
     dfi_correct <- function(data, my_break = my_break, adg_about = adg_about) {
 
       #col_names = names(origin_data)[c(1:5, 10:17, 18:33)]
-      col_names = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
+      cols_need = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
                     "ltd", "ftd", "lwd", "fwd", "fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo",
                     "frv_hi_strict", "frv_hi", "frv_0", "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi",
                     "ltd_lo", "ftd_lo")
@@ -850,7 +850,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
       error_type = c("fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo", "frv_hi_strict", "frv_hi", "frv_0",
                      "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi", "ltd_lo", "ftd_lo")
 
-      temp_inner_join = data$transformed_data[, ..col_names][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
+      temp_inner_join = data$transformed_data[, ..cols_need][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
 
       origin_dfi = temp_inner_join[, .(origin_dfi = sum(fiv)), by = .(responder, seq_days)]
 
@@ -1037,7 +1037,7 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
     fiv_0  <- fiv_hi <- fiv_lo <- frv <- frv_0 <- frv_hi <- frv_hi_fiv_lo <- frv_hi_strict <- 
       frv_lo <- ftd <- ftd_lo <- fwd <- fwd_hi <- fwd_lo <- lm_slope <- 
       ltd <- ltd_lo <- lwd <- lwd_hi <- lwd_lo <- otv <- otv_hi <- otv_lo <- weight <- 
-    fcr <- corrected_dfi <- cor_fcr <- NULL
+    fcr <- corrected_dfi <- cor_fcr <- cols_need <- ..cols_need <- NULL
   
   #caculate mode
   adg_get <- function(data, my_break = my_break, range_offset = range_offset, threshold = threshold, save_path = save_path) {
@@ -1714,7 +1714,7 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
     dfi_correct <- function(data, my_break = my_break, adg_about = adg_about) {
 
       #col_names = names(origin_data)[c(1:5, 10:17, 18:33)]
-      col_names = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
+      cols_need = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
                     "ltd", "ftd", "lwd", "fwd", "fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo",
                     "frv_hi_strict", "frv_hi", "frv_0", "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi",
                     "ltd_lo", "ftd_lo")
@@ -1722,7 +1722,7 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
       error_type = c("fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo", "frv_hi_strict", "frv_hi", "frv_0",
                      "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi", "ltd_lo", "ftd_lo")
 
-      temp_inner_join = data$transformed_data[, ..col_names][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
+      temp_inner_join = data$transformed_data[, ..cols_need][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
 
       origin_dfi = temp_inner_join[, .(origin_dfi = sum(fiv)), by = .(responder, seq_days)]
 
@@ -1905,8 +1905,111 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
   
 ```{r example-fcr_get}
 data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
-fcr_res <- fcr_get(data = data, my_break = c(30, 115))
+fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 ```
+  
+# fcr_summary
+    
+```{r function-fcr_summary}
+#' FCR summary of nedap pig performance station
+#'
+#' @param data A data.frame or a data.table. The data should include at least one pair of weight columns ("min_weight_cut" and "max_weight_cut" or "min_weight_origin" and "max_weight_origin") and the following common columns: "lm_slope", "test_days", "origin_dfi", "corrected_dfi", "fcr". The column "cor_fcr" is optional.
+#'
+#' @return A data.frame that includes the statistics of each column.
+#'
+#' @export
+
+fcr_summary <- function(data) {
+  ..selected_cols <- NULL
+  
+  # Argument checks
+  # Check if the input data is either a data.frame or a data.table
+  if (!inherits(data, "data.frame") && !inherits(data, "data.table")) {
+    stop("The 'data' argument must be a data.frame or a data.table")
+  }
+
+  # Check if all required columns are present
+  weight_cols <- c("min_weight_cut", "max_weight_cut", "min_weight_origin", "max_weight_origin")
+  common_cols <- c("lm_slope", "test_days", "origin_dfi", "corrected_dfi", "fcr", "cor_fcr")
+
+  if (any(weight_cols %in% names(data))) {
+    required_cols <- c(common_cols, weight_cols)
+  } else {
+    stop("The 'data' argument is missing required weight columns")
+  }
+
+  missing_cols <- setdiff(required_cols, names(data))
+
+  # Helper function to process data
+  process_data <- function(data) {
+    # Determine column names
+    if ("min_weight_cut" %in% names(data)) {
+      weight_cols <- c("min_weight_cut", "max_weight_cut")
+    } else if ("min_weight_origin" %in% names(data)) {
+      weight_cols <- c("min_weight_origin", "max_weight_origin")
+    } else {
+      stop("Unknown data format")
+    }
+
+    common_cols <- c("lm_slope", "test_days", "origin_dfi", "corrected_dfi", "fcr")
+
+    if ("cor_fcr" %in% names(data)) {
+      common_cols <- c(common_cols, "cor_fcr")
+    }
+
+    # Combine all selected columns
+    selected_cols <- c(weight_cols, common_cols)
+
+    # Perform operations on these columns in data
+    data <- data[, ..selected_cols]
+
+    # Find all columns that contain "weight"
+    weight_cols <- grep("weight", names(data), value = TRUE)
+
+    # Divide all values in these columns by 1000
+    data[, (weight_cols) := lapply(.SD, function(x) x / 1000), .SDcols = weight_cols][]
+
+    return(data)
+  }
+
+  # Helper function to calculate statistics
+  data_stats <- function(data) {
+    # Convert data.table to data.frame
+    data <- as.data.frame(data)
+
+    data |>
+      dplyr::summarise(dplyr::across(dplyr::everything(),
+                                     list(N = ~ sum(!is.na(.x)),
+                                          min = min,
+                                          max = max,
+                                          median = ~stats::median(.x, na.rm = TRUE),
+                                          mean = ~mean(.x, na.rm = TRUE),
+                                          sd = ~stats::sd(.x, na.rm = TRUE),
+                                          cv = ~stats::sd(.x, na.rm = TRUE) / mean(.x, na.rm = TRUE)))) |>
+      dplyr::ungroup() |>
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, 4)) |>
+      dplyr::mutate(dplyr::across(dplyr::matches("(_mean|_sd|_min|_max|_median)$"), ~sprintf("%0.2f", .x))) |>
+      dplyr::mutate(dplyr::across(dplyr::matches("_cv$"), ~sprintf("%0.4f", .x))) |>
+      dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_cv")), as.numeric) |>
+      dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_cv")), scales::percent, accuracy = 0.01) |>
+      tidyr::pivot_longer(dplyr::everything(), names_to = c("set", ".value"),names_pattern = "(.+|._.+)_(.+)") |>
+      tidyr::unite("mean+/-sd",mean:sd, sep = "+/-")
+  }
+
+  # Process data and calculate statistics
+  processed_data <- process_data(data)
+  result <- data_stats(processed_data)
+
+  return(result)
+}
+```
+  
+```{r example-fcr_summary}
+data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
+fcr_res <- fcr_get(data = data, my_break = c(30, 100))
+fcr_summary(fcr_res[[1]])
+```
+  
   
   
 That's it ! This the end of the documented story of our package. All components are there.

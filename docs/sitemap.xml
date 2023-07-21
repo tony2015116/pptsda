@@ -7,9 +7,6 @@
     <loc>https://github.com/tony2015116/pptsda/articles/basic-usage.html</loc>
   </url>
   <url>
-    <loc>https://github.com/tony2015116/pptsda/articles/get-started.html</loc>
-  </url>
-  <url>
     <loc>https://github.com/tony2015116/pptsda/articles/index.html</loc>
   </url>
   <url>
@@ -35,6 +32,9 @@
   </url>
   <url>
     <loc>https://github.com/tony2015116/pptsda/reference/fcr_get.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/tony2015116/pptsda/reference/fcr_summary.html</loc>
   </url>
   <url>
     <loc>https://github.com/tony2015116/pptsda/reference/import_csv.html</loc>

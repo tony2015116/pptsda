@@ -44,3 +44,8 @@ reference:
       - adg_get
       - dfi_get
       - fcr_get
+  - title: summary function
+    desc: summary fcr results
+    contents:
+      - fcr_summary
+

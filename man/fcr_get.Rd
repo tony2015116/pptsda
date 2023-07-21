@@ -30,5 +30,5 @@ FCR get from pig performance test station csv data
 }
 \examples{
 data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
-fcr_res <- fcr_get(data = data, my_break = c(30, 115))
+fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 }

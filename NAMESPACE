@@ -3,6 +3,7 @@
 export(adg_get)
 export(dfi_get)
 export(fcr_get)
+export(fcr_summary)
 export(import_csv)
 importFrom(data.table,".SD")
 importFrom(data.table,":=")

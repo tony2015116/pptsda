@@ -22,7 +22,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
     fiv_0  <- fiv_hi <- fiv_lo <- frv <- frv_0 <- frv_hi <- frv_hi_fiv_lo <- frv_hi_strict <- 
       frv_lo <- ftd <- ftd_lo <- fwd <- fwd_hi <- fwd_lo <- lm_slope <- location <- location_maxn <- 
       ltd <- ltd_lo <- lwd <- lwd_hi <- lwd_lo <- n <- otv <- otv_hi <- otv_lo <- responder <- seq_days <- 
-      seq_in_day <- seq_in_location <- stage <- visit_time <- weight <- NULL
+      seq_in_day <- seq_in_location <- stage <- visit_time <- weight <- cols_need <- ..cols_need <- NULL
     
     process_data <- function(data) {
       if (missing(data)) stop("Missing data frame or data table!")
@@ -197,7 +197,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
     dfi_correct <- function(data, my_break = my_break, adg_about = adg_about) {
 
       #col_names = names(origin_data)[c(1:5, 10:17, 18:33)]
-      col_names = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
+      cols_need = c("date", "seq_in_day", "seq_days", "location", "responder", "weight", "otv", "fiv", "frv",
                     "ltd", "ftd", "lwd", "fwd", "fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo",
                     "frv_hi_strict", "frv_hi", "frv_0", "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi",
                     "ltd_lo", "ftd_lo")
@@ -205,7 +205,7 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
       error_type = c("fiv_lo", "fiv_hi", "fiv_0", "otv_lo", "otv_hi", "frv_hi_fiv_lo", "frv_hi_strict", "frv_hi", "frv_0",
                      "frv_lo", "lwd_lo", "lwd_hi", "fwd_lo", "fwd_hi", "ltd_lo", "ftd_lo")
 
-      temp_inner_join = data$transformed_data[, ..col_names][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
+      temp_inner_join = data$transformed_data[, ..cols_need][, OE := apply(.SD, 1, function(x)sum(x, na.rm = T)), .SDcols = error_type][]
 
       origin_dfi = temp_inner_join[, .(origin_dfi = sum(fiv)), by = .(responder, seq_days)]
 
