@@ -119,7 +119,7 @@
 </h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
-<p><strong>pptsda</strong> is an R package that enables automatic downloading of data from pig performance test stations. The package stands for ‘Pig Performance Test Station Data Download’. With pptsdd, managing test station data is made much more efficient, as the package automates the process of downloading data from these stations. This allows for a more streamlined workflow for test station data management personnel.</p>
+<p><strong>pptsda</strong> package provides a streamlined workflow for analyzing pig feed efficiency from raw data to insights. It contains functions for data import, cleaning, analysis and visualization to take feed intake CSVs and efficiently compute key performance metrics. The <code><a href="reference/import_csv.html">import_csv()</a></code> function handles batch loading of CSV files. <code><a href="reference/adg_get.html">adg_get()</a></code> calculates average daily gain, detects outliers and generates growth curves. <code><a href="reference/dfi_get.html">dfi_get()</a></code> focuses on correcting feed intake visit data to derive daily feed intake. <code><a href="reference/fcr_get.html">fcr_get()</a></code> combines ADG and DFI to compute feed conversion ratio. <code><a href="reference/fcr_summary.html">fcr_summary()</a></code> produces formatted statistics summaries for interpretation. Together these functions enable straightforward data wrangling, growth modeling, and derivation of ADG, DFI and FCR feed efficiency indicators from raw pig feed intake data. The workflows in pptsda package allow users to quickly go from data intake to analyzed metrics to facilitate downstream evaluation and modeling of pig feed efficiency.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -134,7 +134,18 @@
 <p>This is a basic example which shows you how to solve a common problem:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/tony2015116/pptsda">pptsda</a></span><span class="op">)</span></span>
-<span><span class="co">## basic example code</span></span></code></pre></div>
+<span><span class="co">## import_csv() basic example code</span></span>
+<span><span class="va">csv_files_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"path/to/csv/directory"</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span>, pattern <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
+<span><span class="va">csv_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_csv.html">import_csv</a></span><span class="op">(</span><span class="va">csv_files_list</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## adg_get() basic example code</span></span>
+<span><span class="va">adg_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/adg_get.html">adg_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">csv_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## dfi_get() basic example code</span></span>
+<span><span class="va">dfi_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/dfi_get.html">dfi_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">csv_data</span>, adg_about <span class="op">=</span> <span class="va">adg_res</span><span class="op">)</span> </span>
+<span></span>
+<span><span class="co">## fcr_get() basic example code</span></span>
+<span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">csv_data</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </div>

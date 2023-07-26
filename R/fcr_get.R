@@ -44,9 +44,9 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
       if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
       # Check types for some columns
-      if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+      if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
       if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-      if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+      if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
       if (!is.numeric(data$location)) stop("'location' must be numeric!")
       if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
       if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -541,9 +541,9 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
       if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
       # Check types for some columns
-      if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+      if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
       if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-      if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+      if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
       if (!is.numeric(data$location)) stop("'location' must be numeric!")
       if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
       if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -888,7 +888,7 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
   dfi_res <- dfi_get(data, my_break = my_break, adg_about = adg_res)
   fcr_res <- fcr_get(adg_res = adg_res, dfi_res = dfi_res, my_break = my_break)
 
-  res <- list(fcr_res, adg_res$adg_info, adg_res$adg_data, dfi_res$dfi_info, dfi_res$dfi_data, dfi_res$feedintake_order)
+  res <- list(fcr_res = fcr_res, adg_info = adg_res$adg_info, adg_data = adg_res$adg_data, dfi_info = dfi_res$dfi_info, dfi_data = dfi_res$dfi_data, feedintake_order = dfi_res$feedintake_order)
 
   return(res)
 }

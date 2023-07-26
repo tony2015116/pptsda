@@ -4,7 +4,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-**pptsda** is an R package that enables automatic downloading of data from pig performance test stations. The package stands for 'Pig Performance Test Station Data Download'. With pptsdd, managing test station data is made much more efficient, as the package automates the process of downloading data from these stations. This allows for a more streamlined workflow for test station data management personnel.
+**pptsda** package provides a streamlined workflow for analyzing pig feed efficiency from raw data to insights. It contains functions for data import, cleaning, analysis and visualization to take feed intake CSVs and efficiently compute key performance metrics. The `import_csv()` function handles batch loading of CSV files. `adg_get()` calculates average daily gain, detects outliers and generates growth curves. `dfi_get()` focuses on correcting feed intake visit data to derive daily feed intake. `fcr_get()` combines ADG and DFI to compute feed conversion ratio. `fcr_summary()` produces formatted statistics summaries for interpretation. Together these functions enable straightforward data wrangling, growth modeling, and derivation of ADG, DFI and FCR feed efficiency indicators from raw pig feed intake data. The workflows in pptsda package allow users to quickly go from data intake to analyzed metrics to facilitate downstream evaluation and modeling of pig feed efficiency.
 
 ## Installation
 
@@ -21,6 +21,17 @@ This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(pptsda)
-## basic example code
+## import_csv() basic example code
+csv_files_list <- list.files("path/to/csv/directory", full.names = TRUE, pattern = ".csv")
+csv_data <- import_csv(csv_files_list)
+
+## adg_get() basic example code
+adg_res <- adg_get(data = csv_data)
+
+## dfi_get() basic example code
+dfi_res <- dfi_get(data = csv_data, adg_about = adg_res) 
+
+## fcr_get() basic example code
+fcr_res <- fcr_get(data = csv_data)
 ```
 

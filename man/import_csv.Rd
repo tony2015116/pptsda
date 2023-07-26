@@ -2,7 +2,7 @@
 % Please edit documentation in R/import_csv.R
 \name{import_csv}
 \alias{import_csv}
-\title{Import CSV files using specified package}
+\title{Import CSV files using specified R packages}
 \usage{
 import_csv(file_list, package = "data.table", ...)
 }
@@ -17,7 +17,7 @@ import_csv(file_list, package = "data.table", ...)
 A combined data.frame/data.table of all input CSV files
 }
 \description{
-Import CSV files using specified package
+Import CSV files using specified R packages
 }
 \examples{
 list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)

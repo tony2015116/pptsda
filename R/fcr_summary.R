@@ -13,7 +13,7 @@
 #' fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 #' fcr_summary(fcr_res[[1]])
 fcr_summary <- function(data) {
-  ..selected_cols <- NULL
+  selected_cols <- NULL
   
   # Argument checks
   # Check if the input data is either a data.frame or a data.table
@@ -53,15 +53,19 @@ fcr_summary <- function(data) {
     # Combine all selected columns
     selected_cols <- c(weight_cols, common_cols)
 
-    # Perform operations on these columns in data
-    data <- data[, ..selected_cols]
-
-    # Find all columns that contain "weight"
-    weight_cols <- grep("weight", names(data), value = TRUE)
-
-    # Divide all values in these columns by 1000
-    data[, (weight_cols) := lapply(.SD, function(x) x / 1000), .SDcols = weight_cols][]
-
+    # # Perform operations on these columns in data
+    # data <- data[, ..selected_cols]
+    # 
+    # # Find all columns that contain "weight"
+    # weight_cols <- grep("weight", names(data), value = TRUE)
+    # 
+    # # Divide all values in these columns by 1000
+    # data[, (weight_cols) := lapply(.SD, function(x) x / 1000), .SDcols = weight_cols][]
+    
+    data <- data |>
+      dplyr::select(dplyr::all_of(selected_cols)) |>
+      dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::contains("weight")), function(x) x / 1000))
+    
     return(data)
   }
 

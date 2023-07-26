@@ -44,12 +44,11 @@ usethis::use_mit_license("Guo Meng")
 
 # import_csv
 
-This is the first tool of our wonderful package. 
-You can add `1` to any `value` using function `import_csv()`.
+The `import_csv()` function allows efficient importing of multiple CSV files into a single R data object. It takes a vector of file paths as the main argument, with an optional parameter to specify the package to use for reading CSVs. Valid options are "data.table", "vroom", and "readr". By default, data.table::fread is used for fast parsing. The function handles checking for valid input, loading the required package, looping through the files, reading each one with the appropriate CSV reader, and combining the results into a data.table or data.frame depending on the package used. This provides a convenient wrapper for batch importing CSVs without needing to write a for loop each time. To use it, supply a character vector of CSV file paths to the file_list argument. An optional second argument can choose the CSV reading package, with "data.table" being the default. The result is a consolidated data object containing the contents of all CSVs. This simplifies workflows that involve wrangling multiple CSV files into an analysis-ready dataset in R. By abstracting away the loop boilerplate, it allows the user to focus on the analytical tasks instead of data import details.
 
     
 ```{r function-import_csv}
-#' Import CSV files using specified package
+#' Import CSV files using specified R packages
 #'
 #' @param file_list A list of file paths to CSV files
 #' @param package Package to use for reading CSV. Options are "data.table", "vroom", or "readr". Default is "data.table"
@@ -102,9 +101,7 @@ data <- import_csv(list_csv)
 
 # adg_get
 
-This is the first tool of our wonderful package. 
-You can add `1` to any `value` using function `adg_get()`.
-
+The `adg_get()` function is used to process raw pig feed intake data to calculate average daily gain (ADG) and generate growth curves. It takes the raw data frame as input, cleans invalid records in multiple steps, runs robust regression to detect outliers, fits simple linear models to estimate ADG over desired weight ranges, and produces growth curve plots. The user can specify a weight range to segment the ADG calculation via the my_break parameter. Outlier detection threshold and output image save path can also be customized. After processing, it returns ADG summary info and the analyzed dataset with outlier flags. To use it, supply the raw data and optionally set parameters like my_break. It handles data cleaning, analysis and plotting automatically. The output contains ADG results that can be used for downstream modeling or evaluation. This provides a streamlined workflow to go from raw feed intake data to analyzed growth curves and ADG estimates in a single function call.
 
 ```{r function-adg_get}
 #' ADG get from pig performance test station csv data
@@ -146,9 +143,9 @@ adg_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
     if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
     # Check types for some columns
-    if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+    if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
     if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-    if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+    if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
     if (!is.numeric(data$location)) stop("'location' must be numeric!")
     if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
     if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -647,6 +644,8 @@ adg_res <- adg_get(data = data)
 
 
 # dfi_get
+
+The `dfi_get()` function processes raw pig feed intake visit data to correct outliers and errors and calculate daily feed intake (DFI). It takes the raw data and outputs from `adg_get()` as input. It handles data cleaning by flagging invalid visit data based on predefined rules. Errors are corrected by redistributing feed intake to valid visits. Final DFI is calculated after removing errors. The user can optionally specify a weight range to match the DFI calculation to segmented ADG. Key outputs are DFI summary info and the analyzed dataset. To use it, supply the raw data and `adg_get()` outputs. It handles error detection, correction, DFI calculation and matching to ADG segments automatically. The output contains corrected DFI metrics ready for evaluation. This provides an automated workflow to go from raw feed intake visit data to analyzed DFI estimates matched to ADG weight segments in a single function.
     
 ```{r function-dfi_get}
 #' ADFI get from pig performance test station csv data
@@ -679,9 +678,9 @@ dfi_get <- function(data, my_break = NULL, adg_about) {
       if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
       # Check types for some columns
-      if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+      if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
       if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-      if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+      if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
       if (!is.numeric(data$location)) stop("'location' must be numeric!")
       if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
       if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -1010,6 +1009,8 @@ dfi_get <- dfi_get(data = data, adg_about = adg_res)
   
   
 # fcr_get
+
+The `fcr_get()` function computes feed conversion ratio (FCR) by combining average daily gain (ADG) and daily feed intake (DFI) data. It takes the output lists from `adg_get()` and `dfi_get()` as input, merges the ADG and DFI summary dataframes by pig ID and location, calculates FCR as corrected DFI divided by ADG slope, and optionally adjusts FCR for a specified weight range. The output is an FCR dataframe with pig ID, location, FCR, and adjusted FCR if weight range is provided. To use it, supply the `adg_get()` and `dfi_get()` result lists. It handles merging the data, FCR calculation, and adjustment automatically. This provides a streamlined workflow to go from raw feed intake data to analyzed FCR estimates matched to ADG weight segments. The output FCR metrics can then be used for evaluation and modeling of feed efficiency. By combining ADG and DFI data, `fcr_get()` enables easy computation of the key FCR feed efficiency metric.
     
 ```{r function-fcr_get}
 #' FCR get from pig performance test station csv data
@@ -1053,9 +1054,9 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
       if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
       # Check types for some columns
-      if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+      if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
       if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-      if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+      if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
       if (!is.numeric(data$location)) stop("'location' must be numeric!")
       if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
       if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -1550,9 +1551,9 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
       if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
       # Check types for some columns
-      if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+      if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
       if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-      if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+      if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
       if (!is.numeric(data$location)) stop("'location' must be numeric!")
       if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
       if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
@@ -1897,7 +1898,7 @@ fcr_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
   dfi_res <- dfi_get(data, my_break = my_break, adg_about = adg_res)
   fcr_res <- fcr_get(adg_res = adg_res, dfi_res = dfi_res, my_break = my_break)
 
-  res <- list(fcr_res, adg_res$adg_info, adg_res$adg_data, dfi_res$dfi_info, dfi_res$dfi_data, dfi_res$feedintake_order)
+  res <- list(fcr_res = fcr_res, adg_info = adg_res$adg_info, adg_data = adg_res$adg_data, dfi_info = dfi_res$dfi_info, dfi_data = dfi_res$dfi_data, feedintake_order = dfi_res$feedintake_order)
 
   return(res)
 }
@@ -1909,6 +1910,8 @@ fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 ```
   
 # fcr_summary
+
+The `fcr_summary()` function generates descriptive statistics summaries for feed conversion ratio (FCR) data. It takes a dataframe containing FCR, daily feed intake, average daily gain and weight columns as input. After checking for required columns, it processes the data by selecting relevant columns, dividing weight values by 1000, and calculating summary statistics including count, mean, SD, min, max, median and coefficient of variation. The output is a tidy dataframe containing the statistics for each variable, formatted for printing. To use it, supply a dataframe with FCR and related columns. It handles subsetting, converting units and calculating statistics automatically. This provides a convenient way to generate formatted statistical summaries from FCR data for exploratory analysis and reporting. The output overview of central tendency, dispersion and ranges facilitates interpretation and communication of key feed efficiency metrics.
     
 ```{r function-fcr_summary}
 #' FCR summary of nedap pig performance station
@@ -1920,7 +1923,7 @@ fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 #' @export
 
 fcr_summary <- function(data) {
-  ..selected_cols <- NULL
+  selected_cols <- NULL
   
   # Argument checks
   # Check if the input data is either a data.frame or a data.table
@@ -1960,15 +1963,19 @@ fcr_summary <- function(data) {
     # Combine all selected columns
     selected_cols <- c(weight_cols, common_cols)
 
-    # Perform operations on these columns in data
-    data <- data[, ..selected_cols]
-
-    # Find all columns that contain "weight"
-    weight_cols <- grep("weight", names(data), value = TRUE)
-
-    # Divide all values in these columns by 1000
-    data[, (weight_cols) := lapply(.SD, function(x) x / 1000), .SDcols = weight_cols][]
-
+    # # Perform operations on these columns in data
+    # data <- data[, ..selected_cols]
+    # 
+    # # Find all columns that contain "weight"
+    # weight_cols <- grep("weight", names(data), value = TRUE)
+    # 
+    # # Divide all values in these columns by 1000
+    # data[, (weight_cols) := lapply(.SD, function(x) x / 1000), .SDcols = weight_cols][]
+    
+    data <- data |>
+      dplyr::select(dplyr::all_of(selected_cols)) |>
+      dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::contains("weight")), function(x) x / 1000))
+    
     return(data)
   }
 
@@ -2011,8 +2018,7 @@ fcr_summary(fcr_res[[1]])
 ```
   
   
-  
-That's it ! This the end of the documented story of our package. All components are there.
+The `import_csv()` function provides easy importing and consolidation of multiple CSV files, handling the repetitive workflow of loading raw data files. The `adg_get()` function then processes the imported data to calculate average daily gain over desired weight ranges, with data cleaning, outlier detection and growth curve plotting. Building on `adg_get()`, `dfi_get()` focuses on visit feed intake data, correcting errors and computing daily feed intake matched to ADG segments. Finally, `fcr_get()` combines the ADG and DFI results to efficiently compute the key feed conversion ratio metric. Together these four functions provide a streamlined workflow for analysis of pig feed efficiency from raw CSV data to cleaned datasets, growth curves, ADG estimates, DFI calculations and FCR metrics ready for downstream evaluation and modeling. By encapsulating repetitive tasks like data import and cleaning, they allow users to focus on analytical insights rather than coding details. The output at each step can be customized based on analysis needs. These interlocked functions enable easy end-to-end data wrangling and analysis for pig feed intake data, facilitating efficient computation of ADG, DFI and FCR feed efficiency indicators. That's it ! This the end of the documented story of our package.
 
 <!-- 
 # Inflate your package

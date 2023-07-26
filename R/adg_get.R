@@ -42,9 +42,9 @@ adg_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, sa
     if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
 
     # Check types for some columns
-    if (!is.numeric(data$animal_number)) stop("'animal_number' must be numeric!")
+    if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
     if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-    if (!is.numeric(data$responder)) stop("'responder' must be numeric!")
+    if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
     if (!is.numeric(data$location)) stop("'location' must be numeric!")
     if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
     if (!is.numeric(data$duration)) stop("'duration' must be numeric!")

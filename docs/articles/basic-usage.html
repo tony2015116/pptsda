@@ -144,9 +144,24 @@ Note: when you will use other flat templates, this part will be in a separate fi
 <div class="section level2">
 <h2 id="import_csv">import_csv<a class="anchor" aria-label="anchor" href="#import_csv"></a>
 </h2>
-<p>This is the first tool of our wonderful package. You can add
-<code>1</code> to any <code>value</code> using function
-<code><a href="../reference/import_csv.html">import_csv()</a></code>.</p>
+<p>The <code><a href="../reference/import_csv.html">import_csv()</a></code> function allows efficient importing of
+multiple CSV files into a single R data object. It takes a vector of
+file paths as the main argument, with an optional parameter to specify
+the package to use for reading CSVs. Valid options are “data.table”,
+“vroom”, and “readr”. By default, data.table::fread is used for fast
+parsing. The function handles checking for valid input, loading the
+required package, looping through the files, reading each one with the
+appropriate CSV reader, and combining the results into a data.table or
+data.frame depending on the package used. This provides a convenient
+wrapper for batch importing CSVs without needing to write a for loop
+each time. To use it, supply a character vector of CSV file paths to the
+file_list argument. An optional second argument can choose the CSV
+reading package, with “data.table” being the default. The result is a
+consolidated data object containing the contents of all CSVs. This
+simplifies workflows that involve wrangling multiple CSV files into an
+analysis-ready dataset in R. By abstracting away the loop boilerplate,
+it allows the user to focus on the analytical tasks instead of data
+import details.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">list_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/location301"</span>, pattern <span class="op">=</span> <span class="st">".csv"</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_csv.html">import_csv</a></span><span class="op">(</span><span class="va">list_csv</span><span class="op">)</span></span>
@@ -156,9 +171,21 @@ Note: when you will use other flat templates, this part will be in a separate fi
 <div class="section level2">
 <h2 id="adg_get">adg_get<a class="anchor" aria-label="anchor" href="#adg_get"></a>
 </h2>
-<p>This is the first tool of our wonderful package. You can add
-<code>1</code> to any <code>value</code> using function
-<code><a href="../reference/adg_get.html">adg_get()</a></code>.</p>
+<p>The <code><a href="../reference/adg_get.html">adg_get()</a></code> function is used to process raw pig feed
+intake data to calculate average daily gain (ADG) and generate growth
+curves. It takes the raw data frame as input, cleans invalid records in
+multiple steps, runs robust regression to detect outliers, fits simple
+linear models to estimate ADG over desired weight ranges, and produces
+growth curve plots. The user can specify a weight range to segment the
+ADG calculation via the my_break parameter. Outlier detection threshold
+and output image save path can also be customized. After processing, it
+returns ADG summary info and the analyzed dataset with outlier flags. To
+use it, supply the raw data and optionally set parameters like my_break.
+It handles data cleaning, analysis and plotting automatically. The
+output contains ADG results that can be used for downstream modeling or
+evaluation. This provides a streamlined workflow to go from raw feed
+intake data to analyzed growth curves and ADG estimates in a single
+function call.</p>
 <!--
 Here is an example on how to use the function.
 This should be a reproducible and working example
@@ -187,6 +214,20 @@ This should be a reproducible and working example
 <div class="section level2">
 <h2 id="dfi_get">dfi_get<a class="anchor" aria-label="anchor" href="#dfi_get"></a>
 </h2>
+<p>The <code><a href="../reference/dfi_get.html">dfi_get()</a></code> function processes raw pig feed intake
+visit data to correct outliers and errors and calculate daily feed
+intake (DFI). It takes the raw data and outputs from
+<code><a href="../reference/adg_get.html">adg_get()</a></code> as input. It handles data cleaning by flagging
+invalid visit data based on predefined rules. Errors are corrected by
+redistributing feed intake to valid visits. Final DFI is calculated
+after removing errors. The user can optionally specify a weight range to
+match the DFI calculation to segmented ADG. Key outputs are DFI summary
+info and the analyzed dataset. To use it, supply the raw data and
+<code><a href="../reference/adg_get.html">adg_get()</a></code> outputs. It handles error detection, correction,
+DFI calculation and matching to ADG segments automatically. The output
+contains corrected DFI metrics ready for evaluation. This provides an
+automated workflow to go from raw feed intake visit data to analyzed DFI
+estimates matched to ADG weight segments in a single function.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">rio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rio/man/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/ppt_test_data.xlsx"</span><span class="op">)</span></span>
 <span><span class="va">adg_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/adg_get.html">adg_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span>
@@ -231,6 +272,21 @@ This should be a reproducible and working example
 <div class="section level2">
 <h2 id="fcr_get">fcr_get<a class="anchor" aria-label="anchor" href="#fcr_get"></a>
 </h2>
+<p>The <code><a href="../reference/fcr_get.html">fcr_get()</a></code> function computes feed conversion ratio
+(FCR) by combining average daily gain (ADG) and daily feed intake (DFI)
+data. It takes the output lists from <code><a href="../reference/adg_get.html">adg_get()</a></code> and
+<code><a href="../reference/dfi_get.html">dfi_get()</a></code> as input, merges the ADG and DFI summary
+dataframes by pig ID and location, calculates FCR as corrected DFI
+divided by ADG slope, and optionally adjusts FCR for a specified weight
+range. The output is an FCR dataframe with pig ID, location, FCR, and
+adjusted FCR if weight range is provided. To use it, supply the
+<code><a href="../reference/adg_get.html">adg_get()</a></code> and <code><a href="../reference/dfi_get.html">dfi_get()</a></code> result lists. It
+handles merging the data, FCR calculation, and adjustment automatically.
+This provides a streamlined workflow to go from raw feed intake data to
+analyzed FCR estimates matched to ADG weight segments. The output FCR
+metrics can then be used for evaluation and modeling of feed efficiency.
+By combining ADG and DFI data, <code><a href="../reference/fcr_get.html">fcr_get()</a></code> enables easy
+computation of the key FCR feed efficiency metric.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">rio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rio/man/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/ppt_test_data.xlsx"</span><span class="op">)</span></span>
 <span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, my_break <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
@@ -272,6 +328,21 @@ This should be a reproducible and working example
 <div class="section level2">
 <h2 id="fcr_summary">fcr_summary<a class="anchor" aria-label="anchor" href="#fcr_summary"></a>
 </h2>
+<p>The <code><a href="../reference/fcr_summary.html">fcr_summary()</a></code> function generates descriptive
+statistics summaries for feed conversion ratio (FCR) data. It takes a
+dataframe containing FCR, daily feed intake, average daily gain and
+weight columns as input. After checking for required columns, it
+processes the data by selecting relevant columns, dividing weight values
+by 1000, and calculating summary statistics including count, mean, SD,
+min, max, median and coefficient of variation. The output is a tidy
+dataframe containing the statistics for each variable, formatted for
+printing. To use it, supply a dataframe with FCR and related columns. It
+handles subsetting, converting units and calculating statistics
+automatically. This provides a convenient way to generate formatted
+statistical summaries from FCR data for exploratory analysis and
+reporting. The output overview of central tendency, dispersion and
+ranges facilitates interpretation and communication of key feed
+efficiency metrics.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">rio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rio/man/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/ppt_test_data.xlsx"</span><span class="op">)</span></span>
 <span><span class="va">fcr_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fcr_get.html">fcr_get</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, my_break <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
@@ -310,9 +381,6 @@ This should be a reproducible and working example
 <span><span class="co">#&gt; <span style="color: #00BB00;">• Running model with equation: </span></span></span>
 <span><span class="co"><span style="color: #00BB00;">#&gt; </span>dfi_right_part ~ otd_9 + otd_10 + fiv_hi_p + otv_hi_p + frv_lo_p + location + lm_slope + weight + (1 | responder)</span></span>
 <span><span class="fu"><a href="../reference/fcr_summary.html">fcr_summary</a></span><span class="op">(</span><span class="va">fcr_res</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in `[.data.table`(data, , ..selected_cols): Both 'selected_cols' and</span></span>
-<span><span class="co">#&gt; '..selected_cols' exist in calling scope. Please remove the '..selected_cols'</span></span>
-<span><span class="co">#&gt; variable in calling scope for clarity.</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 7</span></span></span>
 <span><span class="co">#&gt;   set                N min     max     median  `mean+/-sd`      cv    </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
@@ -324,8 +392,26 @@ This should be a reproducible and working example
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> corrected_dfi     87 1980.91 3524.90 2709.17 2711.98+/-348.17 12.84%</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> fcr               87 1.85    2.74    2.33    2.30+/-0.20      8.80% </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> cor_fcr           87 1.84    2.73    2.31    2.30+/-0.20      8.69%</span></span></code></pre></div>
-<p>That’s it ! This the end of the documented story of our package. All
-components are there.</p>
+<p>The <code><a href="../reference/import_csv.html">import_csv()</a></code> function provides easy importing and
+consolidation of multiple CSV files, handling the repetitive workflow of
+loading raw data files. The <code><a href="../reference/adg_get.html">adg_get()</a></code> function then
+processes the imported data to calculate average daily gain over desired
+weight ranges, with data cleaning, outlier detection and growth curve
+plotting. Building on <code><a href="../reference/adg_get.html">adg_get()</a></code>, <code><a href="../reference/dfi_get.html">dfi_get()</a></code>
+focuses on visit feed intake data, correcting errors and computing daily
+feed intake matched to ADG segments. Finally, <code><a href="../reference/fcr_get.html">fcr_get()</a></code>
+combines the ADG and DFI results to efficiently compute the key feed
+conversion ratio metric. Together these four functions provide a
+streamlined workflow for analysis of pig feed efficiency from raw CSV
+data to cleaned datasets, growth curves, ADG estimates, DFI calculations
+and FCR metrics ready for downstream evaluation and modeling. By
+encapsulating repetitive tasks like data import and cleaning, they allow
+users to focus on analytical insights rather than coding details. The
+output at each step can be customized based on analysis needs. These
+interlocked functions enable easy end-to-end data wrangling and analysis
+for pig feed intake data, facilitating efficient computation of ADG, DFI
+and FCR feed efficiency indicators. That’s it ! This the end of the
+documented story of our package.</p>
 <!-- 
 
 # Inflate your package
