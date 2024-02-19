@@ -3,3 +3,4 @@
 * Added a `NEWS.md` file to track changes to the package.
 * Create website for `pptsda`.
 * Add some documentation for `pptsda`.
+* Create a hexagon sticker for `pptsda` website.
