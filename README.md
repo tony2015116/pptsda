@@ -16,7 +16,7 @@ You can install the development version of pptsda like so:
 # install.packages("devtools")
 devtools::install_github("tony2015116/pptsda")
 # install.packages("pak")
-pak::pak("tony2015116/wdauto")
+pak::pak("tony2015116/pptsda")
 ```
 
 ## Example
@@ -28,13 +28,10 @@ library(pptsda)
 ## import_csv() basic example code
 csv_files_list <- list.files("path/to/csv/directory", full.names = TRUE, pattern = ".csv")
 csv_data <- import_csv(csv_files_list)
-
 ## adg_get() basic example code
 adg_res <- adg_get(data = csv_data)
-
 ## dfi_get() basic example code
 dfi_res <- dfi_get(data = csv_data, adg_about = adg_res) 
-
 ## fcr_get() basic example code
 fcr_res <- fcr_get(data = csv_data)
 ```

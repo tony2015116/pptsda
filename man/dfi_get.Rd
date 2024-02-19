@@ -25,7 +25,8 @@ A list containing:
 ADFI get from pig performance test station csv data
 }
 \examples{
-data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
+list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
+data <- import_csv(list_csv)
 adg_res <- adg_get(data = data)
 dfi_get <- dfi_get(data = data, adg_about = adg_res)
 }

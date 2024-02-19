@@ -29,6 +29,7 @@ For example, if my_break is c(60,90) and range_offset is 0.5, the actual range f
 FCR get from pig performance test station csv data
 }
 \examples{
-data <- rio::import("C:/Users/Dell/Downloads/ppt_test_data.xlsx")
+list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
+data <- import_csv(list_csv)
 fcr_res <- fcr_get(data = data, my_break = c(30, 100))
 }

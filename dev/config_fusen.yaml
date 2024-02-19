@@ -1,0 +1,18 @@
+flat_teaching.Rmd:
+  path: dev/flat_teaching.Rmd
+  state: active
+  R:
+  - R/adg_get.R
+  - R/dfi_get.R
+  - R/fcr_get.R
+  - R/fcr_summary.R
+  - R/import_csv.R
+  tests: []
+  vignettes: vignettes/basic-usage.Rmd
+  inflate:
+    flat_file: dev/flat_teaching.Rmd
+    vignette_name: Basic Usage
+    open_vignette: true
+    check: true
+    document: true
+    overwrite: ask
