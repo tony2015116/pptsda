@@ -49,3 +49,7 @@ reference:
     contents:
       - fcr_summary
 
+news:
+  releases:
+  - text: "Version 0.1.0"
+    href: https://github.com/tony2015116/pptsda/releases/tag/v0.1.0
