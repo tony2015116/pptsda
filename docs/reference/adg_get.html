@@ -29,7 +29,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">pptsda</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
@@ -40,16 +40,6 @@
 <li>
   <a href="../reference/index.html">Functions</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/basic-usage.html">Get started</a>
-    </li>
-  </ul></li>
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
@@ -85,7 +75,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>ADG get from pig performance test station csv data</h1>
-    <small class="dont-index">Source: <a href="https://github.com/tony2015116/pptsda/blob/HEAD/R/adg_get.R"><code>R/adg_get.R</code></a></small>
+    
     <div class="hidden name"><code>adg_get.Rd</code></div>
     </div>
 
@@ -137,28 +127,40 @@ For example, if my_break is c(60,90) and range_offset is 0.5, the actual range f
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">list_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/location301"</span>, pattern <span class="op">=</span> <span class="st">".csv"</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="import_csv.html">import_csv</a></span><span class="op">(</span><span class="va">list_csv</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: data.table</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package 'data.table' was built under R version 4.2.3</span>
-<span class="r-in"><span><span class="va">adg_res</span> <span class="op">&lt;-</span> <span class="fu">adg_get</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• There are no duplicate responders in different locations.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• The removing of weight &lt; 15kg will not delete responder.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Revoming records of missing will delete responders:  17 </span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Deleted responders: </span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;"> c("2310133","2310151","2310199","2310241","2310263","2310293","2310315","2310328","2310367","2310368","2310508","2310533","2310539","2310546","2310593","2310602","2310718") </span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BBBBBB;">• Check for errors and warnings in RANSAC Robust</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;"> - No errors encountered during processing.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;"> - No warnings encountered during processing.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;"> - RANSAC Robust succeeded</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• The outliers detected by model will not delete responder.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• All responders' begin_test_weight are less than or equal to 60kg.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• All responders' end_test_weight are more than or equal to 85kg.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BBBBBB;">• Check for errors and warnings in Simple Linear Regression</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;"> - No errors encountered during processing.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;"> - No warnings encountered during processing.</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">• Calculate ADG using Simple Linear Regression succeeded!</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">nedap_csv_data</span> <span class="op">&lt;-</span> <span class="fu">mintyr</span><span class="fu">::</span><span class="va"><a href="https://tony2015116.github.io/mintyr/reference/nedap.html" class="external-link">nedap</a></span></span></span>
+<span class="r-in"><span><span class="va">adg_results</span> <span class="op">&lt;-</span> <span class="fu">adg_get</span><span class="op">(</span>data <span class="op">=</span> <span class="va">nedap_csv_data</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• There are no duplicate responders in different locations.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• The removing of weight &lt; 15kg will not delete responder.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Removing records of missing will delete responders: 1</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Deleted responders: </span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;"> c("15964")</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• Running RANSAC Robust Regression:</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• RANSAC Robust Regression succeeded!</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• The outliers detected by Robust model will not delete responder.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• All responders' begin_test_weight are less than or equal to 60kg.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Removing end_test_weight &lt;85kg records will delete responders: 1</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">• Deleted responders: </span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;"> c("15967")</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• Running Simple Linear Regression</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">• Calculate ADG using Simple Linear Regression succeeded!</span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">adg_results</span><span class="op">$</span><span class="va">adg_info</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;responder&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    responder location start_date_origin min_weight_origin end_date_origin</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt;   &lt;char&gt;            &lt;Date&gt;             &lt;num&gt;          &lt;Date&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     13913      101        2024-02-19          21866.22      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     13918      101        2024-02-19          16529.06      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     13935      102        2024-02-19          21414.80      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     13954      101        2024-02-20          30876.25      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     13996      101        2024-02-19          22753.31      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     14260      102        2024-02-19          27757.93      2024-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    max_weight_origin r_squared  lm_slope</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:          132895.4 0.9914949 1180.5834</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:          121102.8 0.9917870 1089.6744</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:          138871.4 0.9976035 1233.5471</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:          118602.7 0.9781564  941.2985</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:          142956.6 0.9957625 1281.2277</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:          142547.7 0.9962627 1221.0429</span>
 </code></pre></div>
     </div>
   </div>

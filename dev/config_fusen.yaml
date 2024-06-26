@@ -2,10 +2,9 @@ flat_teaching.Rmd:
   path: dev/flat_teaching.Rmd
   state: active
   R:
+  - R/adfi_get.R
   - R/adg_get.R
-  - R/dfi_get.R
   - R/fcr_get.R
-  - R/fcr_summary.R
   - R/import_csv.R
   tests: []
   vignettes: vignettes/basic-usage.Rmd

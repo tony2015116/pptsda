@@ -13,520 +13,479 @@
 #' - adg_info: A data.table containing ADG statistics
 #' - adg_data: A data.table containing processed sample data
 #' @importFrom stats "coef" "predict" "residuals" "sd"
-#' @importFrom data.table ":="
-#' @importFrom data.table ".SD"
+#' @importFrom data.table ":=" ".SD" ".GRP" ".N"
 #' 
 #' @export
 #' @examples
-#' list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-#' data <- import_csv(list_csv)
-#' adg_res <- adg_get(data = data)
+#' nedap_csv_data <- mintyr::nedap
+#' adg_results <- adg_get(data = nedap_csv_data)
+#' head(adg_results$adg_info)
 
+# get adg results and create plots
 adg_get <- function(data, my_break = NULL, range_offset = 0.5, threshold = 1, save_path = NULL) {
-  . <-  .GRP <- .N <- .SD <- `:=` <- N <- color_judge <- data_na_greater_than_one_third <- date_length <- 
-    date_na <- day_diff <- day_text <- end_date_cut <- end_date_origin <- error_msg <- lm_predict <-
-    lm_slope <- location <- location_maxn <- max_weight <- max_weight_cut <- max_weight_origin <- mean_residual <- 
-      min_weight <- min_weight_cut <- min_weight_origin <- model_lmrob <- n <- n_days <- n_responders <- 
-      outliers <-  r_squared <- responder <- row_sum <- safe_lm <- safe_lmrob <- sd_residual <- seq_days <- 
-      seq_in_day <- seq_in_location <- stage <- stage_days <- start_date_cut <- start_date_origin <- temp <- 
-      test_days_less_than_40 <- test_records_less_than_20 <- visit_time <- warning_msg <- weight <- NULL
-  #根据不同用途，分多个函数模块，各模块的数据输出和输入是衔接的
-  #process_data对原始csv进行预处理，找出有重复responder并做处理
-  process_data <- function(data) {
-    weight <- NULL
-    if (missing(data)) stop("Missing data frame or data table!")
-    if (!is.data.frame(data) && !inherits(data, "data.table")) stop("Data is not a data frame or data table!")
-#if (!is.data.frame(data) && !class(data) == 'data.table')
-    # Check for required columns
-    required_columns <- c("animal_number", "lifenumber", "responder", "location", "visit_time", "duration", "state", "weight", "feed_intake")
-    missing_columns <- setdiff(required_columns, names(data))
-    if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
-
-    # Check types for some columns
-    if (!is.numeric(data$animal_number) && !is.character(data$animal_number)) stop("'animal_number' must be numeric or character!")
-    if (!is.logical(data$lifenumber) && !is.character(data$lifenumber)) stop("'lifenumber' must be logical or character!")
-    if (!is.numeric(data$responder) && !is.character(data$responder)) stop("'responder' must be numeric or character!")
-    if (!is.numeric(data$location)) stop("'location' must be numeric!")
-    if (!is.character(data$visit_time) && !inherits(data$visit_time, "POSIXt")) stop("'visit_time' must be character or POSIXct!")
-    if (!is.numeric(data$duration)) stop("'duration' must be numeric!")
-    if (!is.numeric(data$state)) stop("'state' must be numeric!")
-    if (!is.numeric(data$weight)) stop("'weight' must be numeric!")
-    if (!is.numeric(data$feed_intake)) stop("'feed_intake' must be numeric!")
-
-    # Check if the data is a data.frame, if yes, then make a deep copy of the data and convert it into data.table
-    if (is.data.frame(data)) data <- data.table::as.data.table(data.table::copy(data))
-
-    # Filter out the data with NA in 'responder' column and remove duplicates
-    data_temp <- unique(data)[!is.na(responder)]
-
-    # Create a unique data.table for 'responder' and 'location'
-    unique_dt <- unique(data_temp[, .(responder, location)])
-
-    # Find duplicate 'responder's
-    dup_responders <- unique_dt[, .N, by = .(responder)][N > 1]
-
-    # Compute the number of records for each 'responder' and 'location'
-    num_records <- unique(data_temp[, `:=`(n, .N), .(responder, location)][, .(responder, location, n)])
-
-    # Set 'responder' as the key for join operations
-    data.table::setkey(dup_responders, responder)
-    data.table::setkey(num_records, responder)
-
-    # Perform left join operation on 'num_records' and 'dup_responders'
-    dup_records <- num_records[dup_responders]
-
-    # Print duplicate 'responder's and their 'location's
-    if(nrow(dup_records) > 0) {
-      cat(crayon::red("\u2022 There are", length(unique(dup_records$responder)), "duplicated responders.\n"))
-      print(dup_records)
-    } else {
-      cat(crayon::green("\u2022 There are no duplicate responders in different locations.\n"))
-    }
-
-    # Modify the 'location' in the unique data.table for duplicate 'responder's
-    if(nrow(dup_responders) > 0) {
-      # Compute the 'location' with maximum number of records for each 'responder'
-      max_n_location <- num_records[, .(max_n = max(n), location_maxn = location[which.max(n)]), by = responder]
-
-      # Remove duplicates in 'max_n_location' after modifying 'location'
-      max_n_location <- unique(max_n_location)
-
-      # Perform left join operation on 'data_temp' and 'max_n_location' and update 'location' to 'location_maxn'
-      data_temp <- merge(data_temp, max_n_location, by = "responder", all.x = TRUE)[, location := location_maxn][, c("max_n", "location_maxn") := NULL]
-    }
-
-    # Preprocess data and compute sequence features
-    # Check the class of visit_time
-    if(is.character(data_temp$visit_time)) {
-      # If visit_time is a character vector, replace "/" with "-"
-      data_temp[, visit_time := gsub("/", "-", visit_time)]
-      data_pre <- data_temp[, `:=`(c("date", "time"), data.table::IDateTime(visit_time))]
-    } else {
-      # If visit_time is not a character vector, assume it's a datetime object
-      data_pre <- data_temp[, `:=`(c("date", "time"), data.table::IDateTime(visit_time))]
-    }
-    data_pre <- data_pre[data.table::CJ(date = tidyr::full_seq(date, 1)), on = .(date)  # Compute complete sequence of dates
-    ][order(date), `:=`(seq_days, .GRP), by = date  # Compute sequence number of days
-    ][order(visit_time), `:=`(seq_in_day, 1:.N), by = .(responder, date)  # Compute sequence number in day
-    ][order(visit_time), `:=`(seq_in_location, 1:.N), by = .(location, date)  # Compute sequence number in location
-    ][order(responder, visit_time)  # Order data by 'responder' and 'visit_time'
-    ][, .(responder, location, date, seq_in_location, seq_days, seq_in_day, weight)  # Keep only necessary columns
-    ][, `:=` (responder = as.character(responder),  # Convert 'responder' and 'location' to character type
-              location = as.character(location),
-              weight = as.numeric(weight))][]  # Convert 'weight' to numeric type
-    return(data_pre)
-  }
-  #删除整个test阶段体重小于15kg的记录，看是否会因此删掉responder.同时删除因为各类型因数据缺失而淘汰的responder的记录
-  clean_step1 <- function(data) {
-    weight <- NULL
-    # 选出所有responder
-    all_responder <- unique(data[!is.na(responder), .(responder)])
-    # 选出至少有一个weight >= 15000的responder
-    responder_with_weight_ge_15000 <- unique(data[weight >= 15000, .(responder)])
-
-    # 找出所有的weight都小于15000的responder
-    responder_to_delete <- all_responder[!responder_with_weight_ge_15000, on = "responder"]
-
-    # 打印删除的responder的数量
-    if(nrow(responder_to_delete) > 0){
-      cat(crayon::red("\u2022 Revoming weight < 15kg records will delete responders: ", nrow(responder_to_delete), "\n"))
-    } else {
-      cat(crayon::green("\u2022 The removing of weight < 15kg will not delete responder.\n"))
-    }
-
-    # 删除因为删除weight < 15kg而被删除的responder的records
-    temp1 <- data[!responder %in% responder_to_delete$responder]
-
-    # 过滤和处理数据
-    temp2 <- temp1[, `:=`(n, .N), .(responder, location) #temp6是temp2, temp5是temp1
-    ][, `:=`(date_na, sum(is.na(weight))), .(location, responder)
-    ][, `:=`(date_length, as.integer(difftime(max(date), min(date), units = "days"))), responder][, `:=`(
-      test_days_less_than_40 = ifelse(date_length < 35, 1, 0),
-      test_records_less_than_20 = ifelse(n < 20, 1, 0),
-      data_na_greater_than_one_third = ifelse(date_length == 0, 0, ifelse(date_na/date_length >= 1/3, 1, 0))
-    )]
-    # Assuming your data.table is dt
-    temp3 = temp2[, row_sum := rowSums(.SD), .SDcols = c("date_na", "test_days_less_than_40", "test_records_less_than_20", "data_na_greater_than_one_third")]#temp7是temp3
-    outlier <- unique(temp3[,.(responder, location, date_na, test_days_less_than_40, test_records_less_than_20, data_na_greater_than_one_third, row_sum)])[row_sum > 0]
-
-    #在此处删除整个测定阶段记录weight < 15kg 的记录
-    step1_res <- temp3[row_sum==0][weight >= 15000][, .(responder, location, date, seq_in_location, seq_days, seq_in_day, weight)]
-
-    if(nrow(outlier) > 0){
-      # 打印删除的行数
-      cat(crayon::red("\u2022 Revoming records of missing will delete responders: ", nrow(outlier), "\n"))
-    } else {
-      print(crayon::green("\u2022 No responder is deleted due to missing records."))
-    }
-
-    deleted_responders <- c(responder_to_delete$responder, outlier$responder)
-    cat(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")'), "\n"))
-
-
-    # Check if the processed data has zero rows
-    if (nrow(step1_res) == 0) {
-      stop("The processed data is empty!")
-    }
-
-    return(step1_res)
-  }
-  #运行RANSA robust鲁棒回归模型，确定离群值，看是否会因为仅仅剔除离群值就会淘汰responder
-  clean_step2 <- function(data, threshold) {
-
-    # Add argument checks
-    if (!data.table::is.data.table(data)) {
-      stop("Argument 'data' should be of class data.table")
-    }
-
-    if (!is.numeric(threshold) || length(threshold) != 1 || threshold < 0 || threshold > 2) {
-      stop("Argument 'threshold' should be a single numeric value between 0 and 2")
-    }
-
-    #统计data开始时的responder
-    begin_responder <- unique(data[, .(responder)])
-
-    # 最后生成嵌套数据格式
-    data <- data[, .(data = list(.SD)), by = responder]
-
-    # Check for errors and warnings and print messages
-    check_errors_and_warnings <- function(data) {
-      # Check for errors
-      if (any(data[, error_msg != ""])) {
-        cat(crayon::red(" - Errors encountered during processing:\n"))
-        cat(data[data[, error_msg != ""], .(responder, error_msg)], sep = "\n")
-      } else {
-        cat(crayon::blue(" - No errors encountered during processing.\n"))
-      }
-
-      # Check for warnings
-      if (any(data[, warning_msg != ""])) {
-        cat(crayon::red(" - Warnings encountered during processing:\n"))
-        cat(data[data[, warning_msg != ""], .(responder, warning_msg)], sep = "\n")
-      } else {
-        cat(crayon::blue(" - No warnings encountered during processing.\n"))
-      }
-    }
-
-    # 使用RANSAC进行鲁棒线性回归
-    process_lmrob_results <- function(data, threshold, ...) {
-      safelmrob <- purrr::safely(.f = robustbase::lmrob)
-      temp1 <- data[, `:=`(safe_lmrob, purrr::map(data, function(df, ...) safelmrob(..., data = df), ...))
-      ][, `:=`(model_lmrob, purrr::map(safe_lmrob, function(x) x$result))
-      ][, `:=`(error_msg, purrr::map_chr(safe_lmrob, function(x) if (is.null(x$error)) "" else x$error$message))
-      ][, `:=`(warning_msg, purrr::map_chr(safe_lmrob, function(x) if (is.null(x$warning)) "" else x$warning$message))
-      ][, `:=`(residuals, purrr::pmap(list(model_lmrob, error_msg, warning_msg), function(x, e, w) {
-        if (e == "" && w == "") {return(residuals(x))} else {return(NULL)}}))
-      ][, `:=`(predict, purrr::pmap(list(model_lmrob, error_msg, warning_msg), function(x, e, w) {
-        if (e == "" && w == "") {return(predict(x))} else {return(NULL)}}))
-      ][, `:=`(mean_residual, purrr::map_dbl(residuals, mean, na.rm = TRUE))
-      ][, `:=`(sd_residual, purrr::map_dbl(residuals, sd, na.rm = TRUE))
-      ][, `:=`(outliers, purrr::pmap(list(residuals, mean_residual, sd_residual), function(r, m, sd) {
-        if (length(r) > 0) {return(abs(r - m) > threshold * sd)} else {return(NULL)}}))
-      ][]#
-      # Print message
-      cat(crayon::white("\u2022 Check for errors and warnings in RANSAC Robust\n"))
-      check_errors_and_warnings(temp1)
-      temp2 = temp1[, c("safe_lmrob","model_lmrob","error_msg","warning_msg","residuals","mean_residual","sd_residual") := NULL
-      ][, tidyfst::unchop_dt(.SD), .SDcol = c("data", "predict", "outliers"), by = responder]
-      return(temp2)
-    }
-
-    # 函数调用
-    final <- tryCatch({
-      # 设置RANSAC参数
-      control <- robustbase::lmrob.control(tuning.chi = 1.548, k.max = 1000, maxit.scale = 1000, max.it = 1000)
-      lm_results <- process_lmrob_results(data = data, threshold = threshold, weight ~ seq_days + I(seq_days^2), control= control)
-      cat(crayon::green(" - RANSAC Robust succeeded\n"))
-      lm_results #########必须有该行
-    }, error = function(e) {
-      cat(crayon::red("\u2022 Error: ", conditionMessage(e), "\n"))
-      stop("Execution error, the program has stopped")
-    })
-
-    #统计删除outlier后的responder
-    end_reponder <- unique(final[outliers == FALSE])
-    responder_to_delete <- begin_responder[!end_reponder, on = "responder"]
-    deleted_responders <- responder_to_delete$responders
-    # 打印删除的responder的数量
-    if(nrow(responder_to_delete) > 0){
-      cat(crayon::red("\u2022 Detecting outliers using model will delete responders: ", nrow(responder_to_delete), "\n"))
-      cat(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")'), "\n"))
-    } else {
-      cat(crayon::green("\u2022 The outliers detected by model will not delete responder.\n"))
-    }
-
-    # 删除所有的因删除outlier而损失的responder。并且删除outliter
-    final <- final[!responder %in% responder_to_delete$responder]
-
-    return(final)
-  }
-  #删除进站体重大于60kg,出站体重小于85kg的猪只记录
-  clean_step3 <- function(data) {
-    # 获取最大最站体重和最小出站体重
-    handle_data <- function(data, seq_days, direction, weight_type) {
-      data <- data[, keyby = .(responder), `:=`(temp, data.table::frankv(direction * seq_days, ties.method = "dense") <= 1)
-      ][temp == TRUE]
-      data <- data[, keyby = .(responder, location), .(temp_weight = mean(predict))]
-      data.table::setnames(data, "temp_weight", weight_type)
-      return(data)
-    }
-
-    temp0 <- data[outliers == FALSE]
-    # 处理数据，包括筛选体重和计算lm()预测体重平均值
-    temp1 <- handle_data(data = temp0, seq_days, 1, "min_weight")
-
-    # 查找所有体重超过60000的responder
-    overweight_responders <- unique(temp1[min_weight > 60000, .(responder)])
-
-    # 计算超过进站体重上限的responder数量
-    num_overweight_responders <- nrow(overweight_responders)
-
-    # 打印超过权重上限的responder数量
-    if(num_overweight_responders > 0){
-      cat(crayon::red("\u2022 Revoming begin_test_weight > 60kg records will delete responders: ", num_overweight_responders, "\n"))
-    } else {
-      cat(crayon::green("\u2022 All responders' begin_test_weight are less than or equal to 60kg.\n"))
-    }
-
-    # 移除超过权重上限的responder
-    temp2 <- data[!responder %in% overweight_responders$responder]
-
-    temp3 <- handle_data(data = temp2, seq_days, -1, "max_weight")
-
-    # 查找所有体重超过85000的responder
-    underweight_responders <- unique(temp3[max_weight < 85000, .(responder)])
-
-    # 计算超过权重上限的responder数量
-    num_underweight_responders <- nrow(underweight_responders)
-
-    # 打印超过权重上限的responder数量
-    if(num_underweight_responders > 0){
-      cat(crayon::red("\u2022 Revoming end_test_weight < 85kg records will delete responders: ", num_underweight_responders, "\n"))
-      deleted_responders <- c(overweight_responders$responder, underweight_responders$responder)
-      cat(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")'), "\n"))
-    } else {
-      cat(crayon::green("\u2022 All responders' end_test_weight are more than or equal to 85kg.\n"))
-    }
-
-    # 移除超过体重上限的responder
-    passed_repsonder <- temp2[!responder %in% underweight_responders$responder][, !c("temp")]
-    #filtered_responder <- temp2[responder %in% underweight_responders$responder][, !c("temp")]
-    #final <- list(passed_repsonder = passed_repsonder, filtered_responder = filtered_responder)
-
-
-    #return(final)
-    return(passed_repsonder)
-  }
-  #根据有无特定体重阶段分析需求，分别获取adg
-  clean_step4 <- function(data, my_break, range_offset) {
-    weight <- NULL
-    # Add argument checks
-    if (!data.table::is.data.table(data)) {
-      stop("Argument 'data' should be of class data.table")
-    }
-
-    if (!is.null(my_break) && (!is.numeric(my_break) || length(my_break) != 2 || any(my_break < 0))) {
-      stop("Argument 'my_break' should be a numeric vector of length 2 with non-negative values or NULL")
-    }
-
-    if (!is.numeric(range_offset) || length(range_offset) != 1 || range_offset < 0 || range_offset > 1) {
-      stop("Argument 'range_offset' should be a single numeric value in the range [0, 1]")
-    }
-
-    #看情况，最好是过滤掉异常体重数据后再截取体重
-    cut_weight <- function(data, my_break, range_offset) {
-      if (is.data.frame(data)) data <- data.table::as.data.table(data)
-
-      # 将my_break乘以1000以匹配数据中的体重表示
-      my_break <- my_break * 1000
-
-      # 使用给定的范围和范围偏移生成实际的断点
-      actual_breaks <- c(my_break[1] - range_offset * 1000, my_break[2] + range_offset * 1000)
-
-      # 选取指定范围内的体重
-      data <- data[predict >= actual_breaks[1] & predict <= actual_breaks[2], ]
-
-      # 添加stage列，用于表示选取的体重范围
-      data[, `:=`(stage, paste0(my_break[1] / 1000, "-", my_break[2] / 1000))]
-
-      return(data)
-    }
-
-    # 获取最大最站体重和最小出站体重
-    handle_data <- function(data, seq_days, direction, weight_type) {
-      data <- data[, keyby = .(responder), `:=`(temp, data.table::frankv(direction * seq_days, ties.method = "dense") <= 2)
-      ][temp == TRUE]
-      data <- data[, keyby = .(responder, location), .(temp_weight = stats::median(weight))]
-      data.table::setnames(data, "temp_weight", weight_type)
-      return(data)
-    }
-
-    # Check for errors and warnings and print messages
-    check_errors_and_warnings <- function(data) {
-      # Check for errors
-      if (any(data[, error_msg != ""])) {
-        cat(crayon::red(" - Errors encountered during processing:\n"))
-        cat(data[data[, error_msg != ""], .(responder, error_msg)], sep = "\n")
-      } else {
-        cat(crayon::blue(" - No errors encountered during processing.\n"))
-      }
-
-      # Check for warnings
-      if (any(data[, warning_msg != ""])) {
-        cat(crayon::red(" - Warnings encountered during processing:\n"))
-        cat(data[data[, warning_msg != ""], .(responder, warning_msg)], sep = "\n")
-      } else {
-        cat(crayon::blue(" - No warnings encountered during processing.\n"))
-      }
-    }
-
-    #一般线性模型计算日增重
-    process_lm_results <- function(data, ...) {
-      safelm = purrr::safely(.f = stats::lm)
-      temp1 <- data[outliers == FALSE]
-      temp2 <- temp1[, .(data = list(.SD)), by = responder
-      ][, `:=`(safe_lm, purrr::map(data, function(df, ...) safelm(..., data = df), ...))
-      ][, `:=`(safe_lm, purrr::map(safe_lm, function(x) x$result))
-      ][, `:=`(error_msg, purrr::map_chr(safe_lm, function(x) if (is.null(x$error)) "" else x$error$message))
-      ][, `:=`(warning_msg, purrr::map_chr(safe_lm, function(x) if (is.null(x$warning)) "" else x$warning$message))
-      ][, `:=`(lm_predict, purrr::map2(safe_lm, warning_msg, function(x, w) if (w == "") stats::predict(x) else NA))
-      ][, `:=`(lm_slope, purrr::map(safe_lm, function(x) coef(x)["seq_days"]))
-      ][, `:=`(r_squared, purrr::map_dbl(safe_lm, function(x) if (!is.null(x)) summary(x)$r.squared else NA))]
-      # Print message
-      cat(crayon::white("\u2022 Check for errors and warnings in Simple Linear Regression\n"))
-      check_errors_and_warnings(temp2)
-      temp3 <- temp2[, c("responder", "lm_slope", "r_squared")][]
-      final <- temp3 |> tidyfst::unnest_dt(lm_slope)
-      return(final)
-    }
-    # 函数调用
-    final <- tryCatch({
-      if (!is.null(my_break)) {
-        cut_data <- cut_weight(data = data, my_break = my_break, range_offset = range_offset)
-        slopes_cut <- process_lm_results(data = cut_data, weight ~ seq_days)
-        cat(crayon::green(paste0("\u2022 Calculate ADG at ", my_break[1], "~", my_break[2], "kg weight range using Simple Linear Regression succeeded!\n")))
-        final <- merge(cut_data, slopes_cut, by = "responder")[, .(responder, location, stage, date, seq_in_location, seq_days, seq_in_day, weight, predict, r_squared, lm_slope, outliers)]
-
-        temp_weight_get <- final[outliers == FALSE]
-        temp_min_weight <- handle_data(data = temp_weight_get, seq_days, 1, "min_weight_cut")
-        temp_max_weight <- handle_data(data = temp_weight_get, seq_days, -1, "max_weight_cut")
-        info_temp_date <- data.table::copy(final)[, .(start_date_cut = min(date), end_date_cut = max(date)), by = responder]
-        info_temp_base <- unique(final[, .(responder, stage, r_squared, lm_slope)])
-
-        info_temp <- data.table::merge.data.table(info_temp_base, info_temp_date)
-        weight_temp <- data.table::merge.data.table(temp_min_weight, temp_max_weight)
-        temp_final <- data.table::merge.data.table(info_temp, weight_temp)
-        temp_final <- temp_final[, stage_days := (my_break[2] * 1000 - my_break[1] * 1000) / lm_slope]
-        temp_final <- temp_final[, .(responder, location, stage, start_date_cut, min_weight_cut, end_date_cut, max_weight_cut, r_squared, lm_slope, stage_days)]
-
-        fin <- list(adg_info = temp_final, adg_data = final)
-
-      } else {
-        slopes <- process_lm_results(data = data, weight ~ seq_days)
-        cat(crayon::green("\u2022 Calculate ADG using Simple Linear Regression succeeded!\n"))
-        final <- merge(data, slopes, by = "responder")
-
-        temp_weight_get <- final[outliers == FALSE]
-        temp_min_weight <- handle_data(data = temp_weight_get, seq_days, 1, "min_weight_origin")
-        temp_max_weight <- handle_data(data = temp_weight_get, seq_days, -1, "max_weight_origin")
-        info_temp_date <- data.table::copy(final)[, .(start_date_origin = min(date), end_date_origin = max(date)), by = responder]
-        info_temp_base <- unique(final[, .(responder, r_squared, lm_slope)])
-
-        info_temp <- data.table::merge.data.table(info_temp_base, info_temp_date)
-        weight_temp <- data.table::merge.data.table(temp_min_weight, temp_max_weight)
-        temp_final <- data.table::merge.data.table(info_temp, weight_temp)
-        temp_final <- temp_final[, .(responder, location, start_date_origin, min_weight_origin, end_date_origin, max_weight_origin, r_squared, lm_slope)]
-
-        fin <- list(adg_info = temp_final, adg_data = final)
-        #cat(green("\u2022 Calculate ADG using Simple Linear Regression succeeded\n"))
-      }
-    }, error = function(e) {
-      cat(crayon::red("\u2022 Error: ", conditionMessage(e), "\n"))
-      stop("Execution error, the program has stopped")
-    })
-
-    return(final)
-  }
-  #生成生长曲线
-  create_plots <- function(data) {
-    weight <- NULL
-    data <- data[, `:=`(color_judge, data.table::fifelse(outliers == F, "Normal", "Outlier"))
-    ][, .(data = list(.SD)), location]
-
-    data[, `:=`(plot, purrr::map2(data, location, function(.x, .y) {
-      slopes_and_r_squared <- .x[, .(lm_slope = unique(lm_slope), r_squared = unique(r_squared)), by = responder]
-
-      if (!is.null(my_break)) {
-        slopes_and_r_squared[, day_diff := (my_break[2] * 1000 - my_break[1] * 1000) / lm_slope]
-        slopes_and_r_squared[, day_text := sprintf("Slope: %.2f, R^2: %.2f\n%d~%d kg: %.1f days", lm_slope, r_squared, my_break[1], my_break[2], day_diff)]
-      } else {
-        slopes_and_r_squared[, day_text := sprintf("Slope: %.2f, R^2: %.2f", lm_slope, r_squared)]
-      }
-
-      ggplot2::ggplot(data = .x, ggplot2::aes(x = date, y = weight)) +
-        ggplot2::theme_bw() +
-        ggplot2::geom_point(ggplot2::aes(col = color_judge), size = 1, na.rm = T) +
-        ggplot2::scale_color_manual(values = c(Normal = "#38b48b", Outlier = "#b81a35"), name = "robust regression") +
-        ggplot2::scale_x_date(date_breaks = "2 day", date_labels = "%m-%d") +
-        ggplot2::geom_line(ggplot2::aes(x = date, y = predict), na.rm = T) +
-        ggplot2::facet_wrap( ~ as.numeric(responder), ncol = 2) +
-        ggplot2::scale_y_continuous(breaks = seq(15000, 130000, 15000), limits = c(15000, 130000)) +
-        ggplot2::labs(title = paste("Location:", .y)) +
-        ggplot2::theme(legend.position = "bottom",
-                       legend.title = ggplot2::element_text(size = 20),
-                       legend.text = ggplot2::element_text(size = 20),
-                       axis.text.x = ggplot2::element_text(angle = -90, size = 10),
-                       plot.title = ggplot2::element_text(size = 25, face = "bold")
-        ) +
-        ggplot2::geom_hline(yintercept = 30000, linetype = "dashed", color = "#aed0ee") +
-        ggplot2::geom_hline(yintercept = 60000, linetype = "dashed", color = "#aed0ee") +
-        ggplot2::geom_hline(yintercept = 115000, linetype = "dashed", color = "#aed0ee") +
-        ggplot2::geom_text(data = slopes_and_r_squared, mapping = ggplot2::aes(label = day_text, x = min(.x$date), y = 130000, group = responder), hjust = 0, vjust = 1, size = 3)
-    }))]
-    return(data)
-  }
-  #保存生长曲线
-  save_plots <- function(data, save_path) {
-
-    # Add argument checks
-    if (!is.character(save_path) || length(save_path) != 1) {
-      stop("Argument 'save_path' should be a single character string")
-    }
-
-    if (!dir.exists(save_path)) {
-      stop(paste0("Directory '", save_path, "' does not exist"))
-    }
-    # 计算每个location中的responder数量和date天数
-    location_dims <- data[, .(n_responders = data.table::uniqueN(data[[1]]$responder),
-                              n_days = data.table::uniqueN(data[[1]]$date)), by = location]
-
-    # 调整图像的宽度和高度
-    adjusted_dims <- location_dims[, .(width = 0.5 * n_days, height = 5 * n_responders)]
-
-    # 保存图像
-    filename <- if (!is.null(my_break)) {
-      weight_range <- paste0(my_break[1], "-", my_break[2])
-      file.path(save_path, paste0("location_", data$location, "_", weight_range, "_growth.png"))
-    } else {
-      file.path(save_path, paste0("location_", data$location, "_growth.png"))
-    }
-
-    purrr::walk2(filename, data$plot, function(file, plot, width, height) {
-      ggplot2::ggsave(filename = file, plot = plot, width = width, height = height, units = "cm", dpi = "retina")
-    }, width = adjusted_dims$width, height = adjusted_dims$height)
-  }
-
-  #各模块运行
-  temp1 <- process_data(data = data)
-  temp2 <- clean_step1(data = temp1)
-  temp3 <- clean_step2(data = temp2, threshold = threshold)
-  temp4 <- clean_step3(data = temp3)
-  temp5 <- clean_step4(data = temp4, my_break = my_break, range_offset = range_offset)
-
+  # parameters check
+  validate_arguments(threshold, my_break, range_offset)
+  
+  # get adg results
+  adg_results <- process_adg_data(data) |> 
+    clean_and_filter_weight_data() |> 
+    remove_outliers_using_ransac(threshold) |> 
+    validate_responder_weights() |> 
+    calculate_adg_and_clean_data(my_break = my_break , range_offset)
+  
+  # save adg plots
   if (!is.null(save_path)) {
-    temp6 <- create_plots(data = temp5$adg_data)
-    cat(crayon::green("\u2022 Printing growth curve images.Please wait a moment!\n"))
-    save_plots(data = temp6, save_path = save_path)
+    create_adg_plots <- create_adg_plots(data = adg_results$adg_data, my_break = my_break)
+    message(crayon::cyan("\u2022 Printing growth curve images.Please wait a moment!"))
+    save_adg_plots(data = create_adg_plots, my_break = my_break, save_path = save_path)
   }
-  return(temp5)
+  
+  return(adg_results)
+}
+# process adg data
+process_adg_data <- function(data) {
+  if (missing(data)) stop("Missing data frame or data table!")
+
+  # Ensure the input is a data.table and create a deep copy
+  if (!data.table::is.data.table(data)) {
+    data <- data.table::as.data.table(data, keep.rownames = FALSE)
+  } else {
+    data <- data.table::copy(data)
+  }
+
+  # Define and check required columns
+  nedap_cols <- c("animal_number", "lifenumber", "responder", "location", "visit_time", "duration", "state", "weight", "feed_intake")
+  missing_columns <- setdiff(nedap_cols, names(data))
+  if (length(missing_columns) > 0) stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
+
+  # Convert columns to appropriate types
+  data[, `:=`(
+    location = as.character(location),
+    responder = as.character(responder),
+    visit_time = if (!inherits(visit_time, c("POSIXct", "POSIXlt"))) {
+      warning("visit_time converted to POSIXct. Please check if the data source is consistent.")
+      as.POSIXct(visit_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+    } else visit_time,
+    date = as.Date(visit_time)
+  )]
+
+  # Remove duplicates and filter out rows where responder is NA
+  data <- unique(data[!is.na(responder)])
+
+  # Identify duplicate responders across locations
+  unique_dt <- unique(data[, .(responder, location)])
+  dup_responders <- unique_dt[, .N, by = .(responder)][N > 1]
+
+  # Count records for each responder-location combination
+  num_records <- unique(data[, `:=`(n, .N), .(responder, location)][, .(responder, location, n)])
+
+  # Set 'responder' as the key for join operations
+  data.table::setkey(dup_responders, responder)
+  data.table::setkey(num_records, responder)
+
+  # Perform left join operation on 'num_records' and 'dup_responders'
+  dup_records <- num_records[dup_responders]
+
+  # Print duplicate 'responder's and their 'location's
+  if(nrow(dup_responders) > 0) {
+    message(crayon::red("\u2022 There are", nrow(dup_responders), "duplicated responders."))
+    print(dup_records)
+  } else {
+    message(crayon::cyan("\u2022 There are no duplicate responders in different locations."))
+  }
+
+  # Handle duplicate responders by assigning them to the location with most records
+  if (nrow(dup_responders) > 0) {
+    max_n_location <- num_records[, .(max_n = max(n), location_maxn = location[which.max(n)]), by = responder]
+    max_n_location <- unique(max_n_location)
+    data <- merge(data, max_n_location, by = "responder", all.x = TRUE)[, `:=`(location, location_maxn)][, `:=`(c("max_n", "location_maxn"), NULL)]
+  }
+
+  # Create the final dataset with additional columns
+  # Create the final dataset with additional columns
+  data_pre <- data[data.table::CJ(date = tidyr::full_seq(date, 1)), on = .(date)
+  ][, `:=`(seq_days, .GRP), by = .(date)
+  ][order(visit_time), `:=`(seq_in_day, 1:.N), by = .(responder, date)
+  ][order(visit_time), `:=`(seq_in_location, 1:.N), by = .(location, date)
+  ][order(responder, visit_time)][]
+
+  return(data_pre)
+}
+# remove weight < 15kg , test date range < 35days and records < 20
+clean_and_filter_weight_data <- function(data) {
+  # Set key for faster operations on responder
+  data.table::setkey(data, responder)
+
+  # Calculate the maximum weight for each responder
+  max_weights <- data[, .(max_weight = max(weight, na.rm = TRUE)), by = responder]
+
+  # Find responders whose all weights are less than 15000
+  responder_to_delete <- max_weights[max_weight < 15000, responder]
+
+  # Print the number of responders to be deleted due to low weight
+  if(length(responder_to_delete) > 0){
+    message(crayon::red("\u2022 Removing weight < 15kg records will delete responders: ", length(responder_to_delete)))
+  } else {
+    message(crayon::cyan("\u2022 The removing of weight < 15kg will not delete responder."))
+  }
+
+  # Filter and process data
+  temp <- data[!responder %in% responder_to_delete,
+               `:=`(
+                 n = .N,  # Count of records for each responder and location
+                 date_na = sum(is.na(weight)),  # Count of NA weights
+                 date_length = as.integer(difftime(max(date), min(date), units = "days"))  # Date range in days
+               ),
+               by = .(responder, location)
+  ][, `:=`(
+    test_days_less_than_40 = date_length < 35,  # Test if date range is less than 35 days
+    test_records_less_than_20 = n < 20,  # Test if number of records is less than 20
+    data_na_greater_than_one_third = ifelse(date_length == 0, FALSE, date_na/date_length >= 1/3)  # Test if more than 1/3 of data is NA
+  )]
+
+  # Calculate row_sum and find outliers
+  temp[, row_sum := test_days_less_than_40 + test_records_less_than_20 + data_na_greater_than_one_third]
+  outlier <- unique(temp[row_sum > 0, .(responder, location, date_na, test_days_less_than_40, test_records_less_than_20, data_na_greater_than_one_third, row_sum)])
+
+  # Final result: keep rows with row_sum == 0 and weight >= 15000
+  step1_res <- temp[row_sum == 0 & weight >= 15000, .(responder, location, date, seq_in_location, seq_days, seq_in_day, weight)]
+
+  # Print information about outliers
+  if(nrow(outlier) > 0){
+    message(crayon::red("\u2022 Removing records of missing will delete responders:", nrow(outlier)))
+  } else {
+    message(crayon::cyan("\u2022 No responder is deleted due to missing records."))
+  }
+
+  # Combine all deleted responders and print
+  deleted_responders <- c(responder_to_delete, outlier$responder)
+  message(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")')))
+
+  # Check if the processed data is empty
+  if (nrow(step1_res) == 0) {
+    stop("The processed data is empty!")
+  }
+
+  return(step1_res)
+}
+# run robust regression model
+process_lmrob_results <- function(data, threshold, ...) {
+  # Safely apply lmrob function
+  safelmrob <- purrr::safely(.f = robustbase::lmrob)
+
+  # Process data using data.table syntax for efficiency
+  temp1 <- data[, `:=`(safe_lmrob = purrr::map(data, \(df, ...) safelmrob(..., data = df), ...))
+  ][, `:=`(
+    model_lmrob = purrr::map(safe_lmrob, "result"),
+    error_msg = purrr::map_chr(safe_lmrob, \(x) if (is.null(x$error)) "" else x$error$message),
+    warning_msg = purrr::map_chr(safe_lmrob, \(x) if (is.null(x$warning)) "" else x$warning$message)
+  )][, `:=`(
+    residuals = purrr::pmap(list(model_lmrob, error_msg, warning_msg),
+                            \(x, e, w) if (e == "" && w == "") {return(residuals(x))} else {return(NULL)}),
+    predict = purrr::pmap(list(model_lmrob, error_msg, warning_msg),
+                          \(x, e, w) if (e == "" && w == "") {return(predict(x))} else {return(NULL)}))
+  ][, `:=`(mean_residual = purrr::map_dbl(residuals, \(r) mean(r, na.rm = TRUE)),
+           sd_residual = purrr::map_dbl(residuals, \(r) sd(r, na.rm = TRUE)))
+  ][, `:=`(outliers = purrr::pmap(list(residuals, mean_residual, sd_residual),\(r, m, sd) if (length(r) > 0) abs(r - m) > threshold * sd else NULL))][]
+
+
+  # Clean up temporary columns and expand data
+  temp2 <- temp1[, c("safe_lmrob", "model_lmrob", "error_msg", "warning_msg",
+                     "residuals", "mean_residual", "sd_residual") := NULL][, {
+                       dt <- data.table::as.data.table(data[[1]])
+                       dt[, `:=`(
+                         predict = unlist(predict),
+                         outliers = unlist(outliers))]
+                       dt}, by = responder]
+
+  return(temp2)
+}
+# set robust regression
+remove_outliers_using_ransac <- function(data, threshold, tuning.chi = 1.548, k.max = 1000, maxit.scale = 1000, max.it = 1000) {
+  # Count initial responders
+  begin_responder <- unique(data[, .(responder)])
+
+  # Generate nested data format
+  data <- data[, .(data = list(.SD)), by = responder]
+
+  # Set RANSAC parameters
+  control_params <- robustbase::lmrob.control(tuning.chi = tuning.chi, k.max = k.max, maxit.scale = maxit.scale, max.it = max.it)
+
+  #Print message and check for errors and warnings
+  message(crayon::cyan("\u2022 Running RANSAC Robust Regression:"))
+
+  # Process data using RANSAC
+  tryCatch({
+    lm_results <- process_lmrob_results(data = data, threshold = threshold,
+                                        weight ~ seq_days + I(seq_days^2),
+                                        control = control_params)
+    message(crayon::cyan("\u2022 RANSAC Robust Regression succeeded!"))
+
+    # Count remaining responders after outlier removal
+    end_responder <- unique(lm_results[outliers == FALSE, .(responder)])
+    responder_to_delete <- begin_responder[!end_responder, on = "responder"]
+    deleted_responders <- responder_to_delete$responder
+
+    # Print information about deleted responders
+    if (nrow(responder_to_delete) > 0) {
+      message(crayon::red(paste0("\u2022 Detecting outliers using model will delete responders: ",
+                                 nrow(responder_to_delete))))
+      message(crayon::red(paste0('\u2022 Deleted responders: \n',
+                                 'c("', paste(deleted_responders, collapse = '","'), '")')))
+    } else {
+      message(crayon::cyan("\u2022 The outliers detected by Robust model will not delete responder."))
+    }
+
+    # Remove outliers and affected responders
+    lm_results[!responder %in% responder_to_delete$responder]
+  }, error = function(e) {
+    stop(crayon::red(paste("Error:", conditionMessage(e))))
+  })
+}
+# get the maximum/minimum weight
+get_extreme_weights <- function(data, seq_days, direction, weight_type) {
+  data[, keyby = .(responder), `:=`(temp, data.table::frankv(direction * seq_days, ties.method = "dense") <= 2)]
+  filtered_data <- data[temp == TRUE, keyby = .(responder, location), .(temp_weight = stats::median(predict))]
+  data.table::setnames(filtered_data, "temp_weight", weight_type)
+  return(filtered_data)
+}
+# check minimum entry weight and maximum exit wieght 
+validate_responder_weights <- function(data, entry_weight_limit = 60, exit_weight_limit = 85) {
+  # Filter out outliers
+  filtered_data <- data[outliers == FALSE]
+
+  # Get minimum weight
+  min_weights <- get_extreme_weights(filtered_data, seq_days, 1, "min_weight")
+
+  # Identify responders with entry weight exceeding the limit
+  overweight_responders <- unique(min_weights[min_weight > (entry_weight_limit * 1000), .(responder)])
+  num_overweight <- nrow(overweight_responders)
+
+  # Log overweight responders
+  if (num_overweight > 0) {
+    message(crayon::red(paste0("\u2022 Removing begin_test_weight >", entry_weight_limit,
+                               "kg records will delete responders:", num_overweight)))
+  } else {
+    message(crayon::cyan(paste0("\u2022 All responders' begin_test_weight are less than or equal to ",
+                                 entry_weight_limit, "kg.")))
+  }
+
+  # Remove overweight responders
+  data_filtered <- data[!responder %in% overweight_responders$responder]
+
+  # Get maximum weight
+  max_weights <- get_extreme_weights(data_filtered, seq_days, -1, "max_weight")
+
+  # Identify responders with exit weight below the limit
+  underweight_responders <- unique(max_weights[max_weight < (exit_weight_limit * 1000), .(responder)])
+  num_underweight <- nrow(underweight_responders)
+
+  # Log underweight responders
+  if (num_underweight > 0) {
+    message(crayon::red(paste0("\u2022 Removing end_test_weight <", exit_weight_limit, "kg records will delete responders: ", num_underweight)))
+    deleted_responders <- c(overweight_responders$responder, underweight_responders$responder)
+    message(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")')))
+    #message(crayon::red('\u2022 Deleted responders: \n', paste0('c("', paste(deleted_responders, collapse = '","'), '")')))
+  } else {
+    message(crayon::cyan(paste0("\u2022 All responders' end_test_weight are more than or equal to ",
+                                 exit_weight_limit, "kg.")))
+  }
+
+  # Return data for responders who passed weight criteria
+  passed_responders <- data_filtered[!responder %in% underweight_responders$responder]
+  return(passed_responders[, !c("temp")])
+}
+# run simple linear regression model
+process_lm_results <- function(data, ...) {
+  safelm = purrr::safely(.f = stats::lm)
+  temp1 <- data[outliers == FALSE]
+  temp2 <- temp1[, .(data = list(.SD)), by = responder
+  ][, `:=`(safe_lm, purrr::map(data, \(df, ...) safelm(..., data = df), ...))
+  ][, `:=`(safe_lm = purrr::map(safe_lm, "result"),
+           error_msg = purrr::map_chr(safe_lm, \(x) if (is.null(x$error)) "" else x$error$message),
+           warning_msg = purrr::map_chr(safe_lm, \(x) if (is.null(x$warning)) "" else x$warning$message))
+  ][, `:=`(lm_predict, purrr::map2(safe_lm, warning_msg, \(x, w) if (w == "") stats::predict(x) else NA))
+  ][, `:=`(lm_slope, purrr::map(safe_lm, \(x) coef(x)["seq_days"]))
+  ][, `:=`(r_squared, purrr::map_dbl(safe_lm, \(x) if (!is.null(x)) summary(x)$r.squared else NA))]
+
+  final <- temp2[, c("responder", "lm_slope", "r_squared")]
+  final[, lm_slope := unlist(lm_slope)]
+  return(final)
+}
+# parameters check
+validate_arguments <- function(threshold, my_break, range_offset) {
+  # Validate input threshold
+  if (!is.numeric(threshold) || length(threshold) != 1 || threshold < 0 || threshold > 2) {
+    stop("Argument 'threshold' should be a single numeric value between 0 and 2")
+  }
+
+  if (!is.null(my_break) && (!is.numeric(my_break) || length(my_break) != 2 || any(my_break < 0))) {
+    stop("Argument 'my_break' should be a numeric vector of length 2 with non-negative values or NULL")
+  }
+  if (!is.numeric(range_offset) || length(range_offset) != 1 || range_offset < 0 || range_offset > 1) {
+    stop("Argument 'range_offset' should be a single numeric value in the range [0, 1]")
+  }
+}
+# cut weight in range
+cut_weight <- function(data, my_break, range_offset) {
+  # Convert my_break to grams to match weight representation in data
+  my_break <- my_break * 1000
+  # Generate actual break points using the given range and offset
+  actual_breaks <- c(my_break[1] - range_offset * 1000, my_break[2] + range_offset * 1000)
+  # Select weights within the specified range
+  data <- data[predict >= actual_breaks[1] & predict <= actual_breaks[2], ]
+  # Add a 'stage' column to represent the selected weight range
+  data[, `:=`(stage, paste0(my_break[1] / 1000, "-", my_break[2] / 1000))]
+  return(data)
+}
+# set simple linear regression model
+calculate_adg_and_clean_data <- function(data, my_break, range_offset) {
+  # Create a deep copy of the input data
+  data <- data.table::copy(data)
+
+  # Print message
+  message(crayon::cyan("\u2022 Running Simple Linear Regression"))
+
+  # Main function execution wrapped in tryCatch for error handling
+  final <- tryCatch({
+    if (!is.null(my_break)) {
+      # Process data with specified weight break
+      cut_data <- cut_weight(data = data, my_break = my_break, range_offset = range_offset)
+      slopes_cut <- process_lm_results(data = cut_data, weight ~ seq_days)
+      cat(crayon::cyan(paste0("\u2022 Calculate ADG at ", my_break[1], "~", my_break[2], "kg weight range using Simple Linear Regression succeeded!\n")))
+
+      # Merge processed data and calculate additional metrics
+      final <- merge(cut_data, slopes_cut, by = "responder")[, .(responder, location, stage, date, seq_in_location, seq_days, seq_in_day, weight, predict, r_squared, lm_slope, outliers)]
+      temp_weight_get <- final[outliers == FALSE]
+      temp_min_weight <- get_extreme_weights(data = temp_weight_get, seq_days, 1, "min_weight_cut")
+      temp_max_weight <- get_extreme_weights(data = temp_weight_get, seq_days, -1, "max_weight_cut")
+
+      # Calculate additional information
+      info_temp_date <- data.table::copy(final)[, .(start_date_cut = min(date), end_date_cut = max(date)), by = responder]
+      info_temp_base <- unique(final[, .(responder, stage, r_squared, lm_slope)])
+      info_temp <- data.table::merge.data.table(info_temp_base, info_temp_date)
+      weight_temp <- data.table::merge.data.table(temp_min_weight, temp_max_weight)
+      temp_final <- data.table::merge.data.table(info_temp, weight_temp)
+
+      # Calculate stage days and prepare final output
+      temp_final <- temp_final[, stage_days := (my_break[2] * 1000 - my_break[1] * 1000) / lm_slope]
+      temp_final <- temp_final[, .(responder, location, stage, start_date_cut, min_weight_cut, end_date_cut, max_weight_cut, r_squared, lm_slope, stage_days)]
+      fin <- list(adg_info = temp_final, adg_data = final)
+    } else {
+      # Process all data without weight break
+      slopes <- process_lm_results(data = data, weight ~ seq_days)
+      message(crayon::cyan("\u2022 Calculate ADG using Simple Linear Regression succeeded!"))
+
+      # Merge processed data and calculate additional metrics
+      final <- merge(data, slopes, by = "responder")
+      temp_weight_get <- final[outliers == FALSE]
+      temp_min_weight <- get_extreme_weights(data = temp_weight_get, seq_days, 1, "min_weight_origin")
+      temp_max_weight <- get_extreme_weights(data = temp_weight_get, seq_days, -1, "max_weight_origin")
+
+      # Calculate additional information
+      info_temp_date <- data.table::copy(final)[, .(start_date_origin = min(date), end_date_origin = max(date)), by = responder]
+      info_temp_base <- unique(final[, .(responder, r_squared, lm_slope)])
+      info_temp <- data.table::merge.data.table(info_temp_base, info_temp_date)
+      weight_temp <- data.table::merge.data.table(temp_min_weight, temp_max_weight)
+      temp_final <- data.table::merge.data.table(info_temp, weight_temp)
+
+      # Prepare final output
+      temp_final <- temp_final[, .(responder, location, start_date_origin, min_weight_origin, end_date_origin, max_weight_origin, r_squared, lm_slope)]
+      fin <- list(adg_info = temp_final, adg_data = final)
+    }
+  }, error = function(e) {
+    # Error handling
+    message(crayon::red("\u2022 Error: ", conditionMessage(e)))
+    stop("Execution error, the program has stopped")
+  })
+
+  return(final)
+}
+# create adg plots
+create_adg_plots <- function(data, my_break) {
+  # Prepare data: add color_judge column and group by location
+  data <- data[, `:=`(color_judge, data.table::fifelse(outliers == F, "Normal", "Outlier"))
+  ][, .(data = list(.SD)), location]
+
+  # Create plots for each location
+  data[, `:=`(plot, purrr::map2(data, location, function(.x, .y) {
+    # Calculate slopes and R-squared values for each responder
+    slopes_and_r_squared <- .x[, .(lm_slope = unique(lm_slope), r_squared = unique(r_squared)), by = responder]
+
+    # Prepare text labels based on whether my_break is provided
+    if (!is.null(my_break)) {
+      slopes_and_r_squared[, day_diff := (my_break[2] * 1000 - my_break[1] * 1000) / lm_slope]
+      slopes_and_r_squared[, day_text := sprintf("Slope: %.2f, R^2: %.2f\n%d~%d kg: %.1f days", lm_slope, r_squared, my_break[1], my_break[2], day_diff)]
+    } else {
+      slopes_and_r_squared[, day_text := sprintf("Slope: %.2f, R^2: %.2f", lm_slope, r_squared)]
+    }
+
+    # Create ggplot object
+    ggplot2::ggplot(data = .x, ggplot2::aes(x = date, y = weight)) +
+      # Set theme
+      ggplot2::theme_bw() +
+      # Add points for each data point, colored by outlier status
+      ggplot2::geom_point(ggplot2::aes(col = color_judge), size = 1, na.rm = T) +
+      # Set color scale for normal and outlier points
+      ggplot2::scale_color_manual(values = c(Normal = "#38b48b", Outlier = "#b81a35"), name = "robust regression") +
+      # Format x-axis (date)
+      ggplot2::scale_x_date(date_breaks = "2 day", date_labels = "%m-%d") +
+      # Add prediction line
+      ggplot2::geom_line(ggplot2::aes(x = date, y = predict), na.rm = T) +
+      # Create separate plots for each responder
+      ggplot2::facet_wrap( ~ as.numeric(responder), ncol = 2) +
+      # Set y-axis scale
+      ggplot2::scale_y_continuous(breaks = seq(15000, 130000, 15000), limits = c(15000, 130000)) +
+      # Add title
+      ggplot2::labs(title = paste("Location:", .y)) +
+      # Customize theme elements
+      ggplot2::theme(legend.position = "bottom",
+                     legend.title = ggplot2::element_text(size = 20),
+                     legend.text = ggplot2::element_text(size = 20),
+                     axis.text.x = ggplot2::element_text(angle = -90, size = 10),
+                     plot.title = ggplot2::element_text(size = 25, face = "bold")
+      ) +
+      # Add horizontal reference lines
+      ggplot2::geom_hline(yintercept = 30000, linetype = "dashed", color = "#aed0ee") +
+      ggplot2::geom_hline(yintercept = 60000, linetype = "dashed", color = "#aed0ee") +
+      ggplot2::geom_hline(yintercept = 115000, linetype = "dashed", color = "#aed0ee") +
+      #ggplot2::geom_hline(yintercept = 120000, linetype = "dashed", color = "#aed0ee") +
+      # Add text annotations for slope and R-squared
+      ggplot2::geom_text(data = slopes_and_r_squared, mapping = ggplot2::aes(label = day_text, x = min(.x$date), y = 130000, group = responder), hjust = 0, vjust = 1, size = 3)
+  }))]
+
+  # Return the data with added plots
+  return(data)
+}
+# save plots
+save_adg_plots <- function(data, my_break, save_path) {
+  # Add argument checks
+  if (!is.character(save_path) || length(save_path) != 1) {
+    stop("Argument 'save_path' should be a single character string")
+  }
+  if (!dir.exists(save_path)) {
+    stop(paste0("Directory '", save_path, "' does not exist"))
+  }
+
+  # Calculate the number of responders and days for each location
+  location_dims <- data[, .(n_responders = data.table::uniqueN(data[[1]]$responder),
+                            n_days = data.table::uniqueN(data[[1]]$date)), by = location]
+
+  # Adjust the width and height of the images
+  adjusted_dims <- location_dims[, .(width = 0.5 * n_days, height = 5 * n_responders)]
+
+  # Generate filenames for saving plots
+  filename <- if (!is.null(my_break)) {
+    # If my_break is provided, include weight range in the filename
+    weight_range <- paste0(my_break[1], "-", my_break[2])
+    file.path(save_path, paste0("location_", data$location, "_", weight_range, "_growth.png"))
+  } else {
+    # If my_break is not provided, use a simpler filename
+    file.path(save_path, paste0("location_", data$location, "_growth.png"))
+  }
+
+  # Save the plots
+  purrr::walk2(filename, data$plot, function(file, plot, width, height) {
+    ggplot2::ggsave(filename = file, plot = plot, width = width, height = height, units = "cm", dpi = "retina")
+  }, width = adjusted_dims$width, height = adjusted_dims$height)
 }

@@ -1,6 +1,6 @@
 Package: pptsda
 Title: Breeding Tools
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Guo Meng", , , "tony2015116@163.com", role = c("aut", "cre")),
     person("Guo Meng", role = "cph")
@@ -8,29 +8,22 @@ Authors@R: c(
 Description: An R package that can analyze the csv data from the Nedap in
     pig farm.
 License: MIT + file LICENSE
-URL: https://github.com/tony2015116/pptsda
-BugReports: https://github.com/tony2015116/pptsda/issues
 Imports: 
-    broom.mixed,
     crayon,
     data.table,
-    dplyr,
     ggplot2,
-    janitor,
     lme4,
-    lubridate,
     purrr,
     readr,
     recipes,
     robustbase,
-    scales,
     stats,
-    tibble,
-    tidyfst,
     tidyr,
+    utils,
     vroom
 Suggests: 
     knitr,
+    mintyr,
     rmarkdown
 VignetteBuilder: 
     knitr

@@ -6,7 +6,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/tony2015116/pptsda)](#)
 <!-- badges: end -->
 
-**pptsda** package provides a streamlined workflow for analyzing pig feed efficiency from raw data to insights. It contains functions for data import, cleaning, analysis and visualization to take feed intake CSVs and efficiently compute key performance metrics. The `import_csv()` function handles batch loading of CSV files. `adg_get()` calculates average daily gain, detects outliers and generates growth curves. `dfi_get()` focuses on correcting feed intake visit data to derive daily feed intake. `fcr_get()` combines ADG and DFI to compute feed conversion ratio. `fcr_summary()` produces formatted statistics summaries for interpretation. Together these functions enable straightforward data wrangling, growth modeling, and derivation of ADG, DFI and FCR feed efficiency indicators from raw pig feed intake data. The workflows in pptsda package allow users to quickly go from data intake to analyzed metrics to facilitate downstream evaluation and modeling of pig feed efficiency.
+**pptsda** package provides a streamlined workflow for analyzing pig feed efficiency from raw data to insights. It contains functions for data import, cleaning, analysis and visualization to take feed intake CSVs and efficiently compute key performance metrics. The `import_csv()` function handles batch loading of CSV files. `adg_get()` calculates average daily gain, detects outliers and generates growth curves. `dfi_get()` focuses on correcting feed intake visit data to derive daily feed intake. `fcr_get()` combines ADG and DFI to compute feed conversion ratio. Together these functions enable straightforward data wrangling, growth modeling, and derivation of ADG, DFI and FCR feed efficiency indicators from raw pig feed intake data. The workflows in pptsda package allow users to quickly go from data intake to analyzed metrics to facilitate downstream evaluation and modeling of pig feed efficiency.
 
 ## Installation
 
@@ -28,11 +28,21 @@ library(pptsda)
 ## import_csv() basic example code
 csv_files_list <- list.files("path/to/csv/directory", full.names = TRUE, pattern = ".csv")
 csv_data <- import_csv(csv_files_list)
+
+## use default data
+nedap_csv_data <- mintyr::nedap
+
 ## adg_get() basic example code
-adg_res <- adg_get(data = csv_data)
-## dfi_get() basic example code
-dfi_res <- dfi_get(data = csv_data, adg_about = adg_res) 
+adg_results <- adg_get(data = nedap_csv_data)
+head(adg_results$adg_info)
+
+## adfi_get() basic example code
+adfi_results <- adfi_get(data = nedap_csv_data, adg_res = adg_results)
+head(adfi_results$adfi_info)
+
 ## fcr_get() basic example code
-fcr_res <- fcr_get(data = csv_data)
+fcr_results <- fcr_get(adg_res = adg_results, adfi_res = adfi_results)
+head(fcr_results$fcr_res)
+head(fcr_results$fcr_summary)
 ```
 

@@ -66,23 +66,23 @@ This should be a reproducible and working example
 
 
 ```{r examples-adg_get}
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-adg_res <- adg_get(data = data)
+nedap_csv_data <- mintyr::nedap
+adg_results <- adg_get(data = nedap_csv_data)
+head(adg_results$adg_info)
 ```
 
-# dfi_get
+# adfi_get
 
-The `dfi_get()` function processes raw pig feed intake visit data to correct outliers and errors and calculate daily feed intake (DFI). It takes the raw data and outputs from `adg_get()` as input. It handles data cleaning by flagging invalid visit data based on predefined rules. Errors are corrected by redistributing feed intake to valid visits. Final DFI is calculated after removing errors. The user can optionally specify a weight range to match the DFI calculation to segmented ADG. Key outputs are DFI summary info and the analyzed dataset. To use it, supply the raw data and `adg_get()` outputs. It handles error detection, correction, DFI calculation and matching to ADG segments automatically. The output contains corrected DFI metrics ready for evaluation. This provides an automated workflow to go from raw feed intake visit data to analyzed DFI estimates matched to ADG weight segments in a single function.
+The `adfi_get()` function processes raw pig feed intake visit data to correct outliers and errors and calculate daily feed intake (DFI). It takes the raw data and outputs from `adg_get()` as input. It handles data cleaning by flagging invalid visit data based on predefined rules. Errors are corrected by redistributing feed intake to valid visits. Final DFI is calculated after removing errors. The user can optionally specify a weight range to match the DFI calculation to segmented ADG. Key outputs are DFI summary info and the analyzed dataset. To use it, supply the raw data and `adg_get()` outputs. It handles error detection, correction, DFI calculation and matching to ADG segments automatically. The output contains corrected DFI metrics ready for evaluation. This provides an automated workflow to go from raw feed intake visit data to analyzed DFI estimates matched to ADG weight segments in a single function.
     
 
   
 
-```{r example-dfi_get}
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-adg_res <- adg_get(data = data)
-dfi_get <- dfi_get(data = data, adg_about = adg_res)
+```{r example-adfi_get}
+nedap_csv_data <- mintyr::nedap
+adg_results <- adg_get(data = nedap_csv_data)
+adfi_results <- adfi_get(data = nedap_csv_data, adg_res = adg_results)
+head(adfi_results$adfi_info)
 ```
 
   
@@ -96,25 +96,12 @@ The `fcr_get()` function computes feed conversion ratio (FCR) by combining avera
   
 
 ```{r example-fcr_get}
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-fcr_res <- fcr_get(data = data, my_break = c(30, 100))
-```
-
-  
-
-# fcr_summary
-
-The `fcr_summary()` function generates descriptive statistics summaries for feed conversion ratio (FCR) data. It takes a dataframe containing FCR, daily feed intake, average daily gain and weight columns as input. After checking for required columns, it processes the data by selecting relevant columns, dividing weight values by 1000, and calculating summary statistics including count, mean, SD, min, max, median and coefficient of variation. The output is a tidy dataframe containing the statistics for each variable, formatted for printing. To use it, supply a dataframe with FCR and related columns. It handles subsetting, converting units and calculating statistics automatically. This provides a convenient way to generate formatted statistical summaries from FCR data for exploratory analysis and reporting. The output overview of central tendency, dispersion and ranges facilitates interpretation and communication of key feed efficiency metrics.
-    
-
-  
-
-```{r example-fcr_summary, echo = TRUE}
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-fcr_res <- fcr_get(data = data, my_break = c(30, 100))
-fcr_summary(fcr_res[[1]])
+nedap_csv_data <- mintyr::nedap
+adg_results <- adg_get(data = nedap_csv_data)
+adfi_results <- adfi_get(data = nedap_csv_data, adg_res = adg_results)
+fcr_results <- fcr_get(adg_res = adg_results, adfi_res = adfi_results)
+head(fcr_results$fcr_res)
+head(fcr_results$fcr_summary)
 ```
 
   

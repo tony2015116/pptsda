@@ -29,7 +29,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">pptsda</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
@@ -40,16 +40,6 @@
 <li>
   <a href="../reference/index.html">Functions</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/basic-usage.html">Get started</a>
-    </li>
-  </ul></li>
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
@@ -85,7 +75,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Import CSV files using specified R packages</h1>
-    <small class="dont-index">Source: <a href="https://github.com/tony2015116/pptsda/blob/HEAD/R/import_csv.R"><code>R/import_csv.R</code></a></small>
+    
     <div class="hidden name"><code>import_csv.Rd</code></div>
     </div>
 
@@ -122,6 +112,7 @@
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">list_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"C:/Users/Dell/Downloads/location301"</span>, pattern <span class="op">=</span> <span class="st">".csv"</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">import_csv</span><span class="op">(</span><span class="va">list_csv</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: data.table</span>
 </code></pre></div>
     </div>
   </div>

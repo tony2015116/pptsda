@@ -36,7 +36,7 @@ A list containing:
 ADG get from pig performance test station csv data
 }
 \examples{
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-adg_res <- adg_get(data = data)
+nedap_csv_data <- mintyr::nedap
+adg_results <- adg_get(data = nedap_csv_data)
+head(adg_results$adg_info)
 }

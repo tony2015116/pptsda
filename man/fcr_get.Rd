@@ -2,34 +2,40 @@
 % Please edit documentation in R/fcr_get.R
 \name{fcr_get}
 \alias{fcr_get}
-\title{FCR get from pig performance test station csv data}
+\title{Calculate Feed Conversion Ratio (FCR)}
 \usage{
-fcr_get(
-  data,
-  my_break = NULL,
-  range_offset = 0.5,
-  threshold = 1,
-  save_path = NULL
-)
+fcr_get(adg_res, adfi_res)
 }
 \arguments{
-\item{data}{A data frame or data table containing the nedap or fire pig performance test data to be processed. Columns must include 'visit_time', 'location', 'responder', 'feed_intake'.}
+\item{adg_res}{A list containing ADG results, including 'adg_info' and 'adg_data' from adg_get().}
 
-\item{my_break}{Optional, a numeric vector of length 2, indicates target weight range for calculating ADG, default NULL. If not NULL, ADG will be calculated within this range.}
-
-\item{range_offset}{Optional, a numeric value, default 0.5.
-Used to extend the target weight range specified in my_break to avoid border effect.
-For example, if my_break is c(60,90) and range_offset is 0.5, the actual range for analysis will be 57.5~92.5.}
-
-\item{threshold}{Optional, a numeric value, default 1, used as the threshold to identify outliers in RANSAC regression, usually 0~2.}
-
-\item{save_path}{Optional, a character string specifying where to save the generated growth curve images. If not NULL, images will be saved to this path.}
+\item{adfi_res}{A list containing ADFI results, including 'adfi_info' and 'adfi_data' from adfi_get().}
+}
+\value{
+A list containing:
+\item{fcr_res}{A data.table with FCR results, including 'fcr' and 'cor_fcr' (if applicable)}
+\item{adg_info}{The original ADG info data.table}
+\item{adg_data}{The original ADG data}
+\item{adfi_info}{The original ADFI info data.table}
+\item{adfi_data}{The original ADFI data}
 }
 \description{
-FCR get from pig performance test station csv data
+This function calculates the Feed Conversion Ratio (FCR) based on average daily gain (ADG) and average daily feed intake (ADFI) results.
+It also calculates a corrected FCR if stage information is available.
+}
+\note{
+\itemize{
+\item This function assumes that 'adg_info' and 'adfi_info' are data.tables with columns 'responder' and 'location'.
+\item The function expects 'corrected_dfi' and 'lm_slope' columns in the joined data for FCR calculation.
+\item The corrected FCR calculation is only performed if a 'stage' column is present in the joined data.
+\item The variables 'min_weight_cut' and 'max_weight_cut' should be defined in the global environment or passed as parameters for the corrected FCR calculation.
+}
 }
 \examples{
-list_csv <- list.files("C:/Users/Dell/Downloads/location301", pattern = ".csv", full.names = TRUE)
-data <- import_csv(list_csv)
-fcr_res <- fcr_get(data = data, my_break = c(30, 100))
+nedap_csv_data <- mintyr::nedap
+adg_results <- adg_get(data = nedap_csv_data)
+adfi_results <- adfi_get(data = nedap_csv_data, adg_res = adg_results)
+fcr_results <- fcr_get(adg_res = adg_results, adfi_res = adfi_results)
+head(fcr_results$fcr_res)
+head(fcr_results$fcr_summary)
 }
